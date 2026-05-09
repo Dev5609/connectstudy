@@ -115,29 +115,29 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   }
 
   return (
-    <Card className="p-8 border-2 border-primary/10 shadow-xl flex flex-col items-center gap-6 bg-card">
-      <Tabs value={mode} onValueChange={handleModeChange} className="w-full max-w-xs">
-        <TabsList className="grid w-full grid-cols-3 bg-secondary">
-          <TabsTrigger value="infinite" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Free</TabsTrigger>
-          <TabsTrigger value="custom" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Fixed</TabsTrigger>
-          <TabsTrigger value="pomodoro" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Pomo</TabsTrigger>
+    <Card className="p-6 md:p-10 border-2 border-white/10 shadow-2xl flex flex-col items-center gap-6 md:gap-8 bg-black">
+      <Tabs value={mode} onValueChange={handleModeChange} className="w-full max-w-[280px]">
+        <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10">
+          <TabsTrigger value="infinite" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Flow</TabsTrigger>
+          <TabsTrigger value="custom" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Fix</TabsTrigger>
+          <TabsTrigger value="pomodoro" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Pomo</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <div className="flex flex-col items-center gap-2">
-        <span className="text-8xl font-black tracking-tighter font-mono text-primary">
+        <span className="text-7xl md:text-9xl font-black tracking-tighter font-mono leading-none">
           {formatTime(timeLeft)}
         </span>
-        <span className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
-          {mode === "infinite" ? "Flowing Time" : isBreak ? "Short Break" : "Deep Work"}
+        <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-muted-foreground mt-2">
+          {mode === "infinite" ? "Unbound Session" : isBreak ? "Short Interval" : "Core Focus"}
         </span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         <Button 
           variant="outline" 
           size="icon" 
-          className="h-12 w-12 border-2 border-primary/20" 
+          className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all" 
           onClick={resetTimer}
         >
           <RotateCcw className="w-5 h-5" />
@@ -145,10 +145,10 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
         <Button 
           variant="default" 
           size="lg" 
-          className="h-16 w-16 rounded-full bg-primary text-background hover:scale-105 transition-transform"
+          className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-white text-black hover:scale-105 transition-transform"
           onClick={() => setIsActive(!isActive)}
         >
-          {isActive ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+          {isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}
         </Button>
         
         <Popover>
@@ -156,34 +156,38 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
             <Button 
               variant="outline" 
               size="icon" 
-              className="h-12 w-12 border-2 border-primary/20"
+              className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all"
             >
               <Settings2 className="w-5 h-5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 space-y-4 bg-card border-primary/20">
-            <h4 className="text-xs font-bold uppercase tracking-widest">Timer Settings</h4>
-            <div className="grid gap-2">
-              <Label htmlFor="pomo" className="text-[10px] uppercase font-bold">Pomo (min)</Label>
-              <Input 
-                id="pomo" 
-                type="number" 
-                value={pomoDuration} 
-                onChange={(e) => setPomoDuration(Number(e.target.value))} 
-                className="h-8 text-xs bg-background"
-              />
+          <PopoverContent className="w-64 space-y-4 bg-black border-2 border-white/20 p-6">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest border-b border-white/10 pb-2">Configuration</h4>
+            <div className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <Label htmlFor="pomo" className="text-[10px] uppercase font-bold opacity-60">Pomo Duration</Label>
+                <Input 
+                  id="pomo" 
+                  type="number" 
+                  value={pomoDuration} 
+                  onChange={(e) => setPomoDuration(Number(e.target.value))} 
+                  className="h-8 text-xs bg-white/5 border-white/20"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="break" className="text-[10px] uppercase font-bold opacity-60">Break Duration</Label>
+                <Input 
+                  id="break" 
+                  type="number" 
+                  value={breakDuration} 
+                  onChange={(e) => setBreakDuration(Number(e.target.value))} 
+                  className="h-8 text-xs bg-white/5 border-white/20"
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="break" className="text-[10px] uppercase font-bold">Break (min)</Label>
-              <Input 
-                id="break" 
-                type="number" 
-                value={breakDuration} 
-                onChange={(e) => setBreakDuration(Number(e.target.value))} 
-                className="h-8 text-xs bg-background"
-              />
-            </div>
-            <Button className="w-full text-[10px] uppercase font-bold" onClick={resetTimer}>Apply & Reset</Button>
+            <Button className="w-full text-[10px] uppercase font-bold bg-white text-black hover:bg-white/90" onClick={resetTimer}>
+              Update & Reset
+            </Button>
           </PopoverContent>
         </Popover>
       </div>
