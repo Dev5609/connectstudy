@@ -1,19 +1,31 @@
+
 "use client"
 
 import { Navbar } from "@/components/layout/Navbar"
 import { FocusTimer } from "@/components/study/FocusTimer"
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts"
 import { Button } from "@/components/ui/button"
-import { Plus, Users, ArrowRight, Lock, Globe } from "lucide-react"
+import { Plus, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useCollection, useFirestore } from "@/firebase"
+import { collection, query, limit, orderBy } from "firebase/firestore"
+import { useMemo } from "react"
 
 export default function Home() {
+  const db = useFirestore()
+  
+  const roomsQuery = useMemo(() => {
+    if (!db) return null
+    return query(collection(db, "rooms"), orderBy("createdAt", "desc"), limit(6))
+  }, [db])
+
+  const { data: rooms, loading } = useCollection(roomsQuery)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-1 container mx-auto px-6 py-12 space-y-16">
-        {/* Hero / Quick Access Section */}
         <section className="grid lg:grid-cols-3 gap-12 items-center">
           <div className="lg:col-span-1 space-y-6">
             <div className="space-y-2">
@@ -43,39 +55,37 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Rooms */}
         <section className="space-y-6">
           <div className="flex items-center justify-between border-b-2 pb-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Active Study Rooms</h2>
             <Link href="/rooms" className="text-xs font-bold uppercase hover:underline">View All</Link>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <RoomCard 
-              name="CS101 Prep" 
-              participants={8} 
-              type="public" 
-              topic="Computer Science" 
-              image="https://picsum.photos/seed/rm1/600/400"
-            />
-            <RoomCard 
-              name="Quiet Library" 
-              participants={24} 
-              type="public" 
-              topic="Silent Study" 
-              image="https://picsum.photos/seed/rm2/600/400"
-            />
-            <RoomCard 
-              name="Design Systems Sync" 
-              participants={4} 
-              type="private" 
-              topic="Collaboration" 
-              image="https://picsum.photos/seed/rm3/600/400"
-            />
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin opacity-20" />
+            </div>
+          ) : rooms && rooms.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rooms.map((room) => (
+                <RoomCard 
+                  key={room.id}
+                  id={room.id}
+                  name={room.name} 
+                  participants={room.participantCount || 0} 
+                  type={room.type} 
+                  topic={room.topic} 
+                  image={room.image || `https://picsum.photos/seed/${room.id}/600/400`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed bg-muted/20">
+              <p className="text-sm font-bold uppercase tracking-widest opacity-40">No active rooms found. Start one to begin.</p>
+            </div>
+          )}
         </section>
 
-        {/* Analytics Section Preview */}
         <section className="space-y-6">
           <div className="flex items-center justify-between border-b-2 pb-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Your Productivity</h2>
@@ -105,9 +115,9 @@ export default function Home() {
   )
 }
 
-function RoomCard({ name, participants, type, topic, image }: { name: string, participants: number, type: 'public' | 'private', topic: string, image: string }) {
+function RoomCard({ id, name, participants, type, topic, image }: { id: string, name: string, participants: number, type: 'public' | 'private', topic: string, image: string }) {
   return (
-    <Link href="/rooms/demo-room" className="group">
+    <Link href={`/rooms/${id}`} className="group">
       <div className="border-2 hover:bg-secondary/30 transition-smooth overflow-hidden">
         <div className="aspect-[16/9] relative grayscale group-hover:grayscale-0 transition-all duration-500 overflow-hidden">
           <img 

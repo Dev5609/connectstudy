@@ -1,0 +1,63 @@
+
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A virtual study room",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "topic": { "type": "string" },
+        "type": { "type": "string", "enum": ["public", "private"] },
+        "image": { "type": "string" },
+        "participantCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "topic", "type", "ownerId"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a room",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "content", "timestamp"]
+    },
+    "Session": {
+      "title": "Session",
+      "description": "A completed study session record",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["durationMinutes", "timestamp", "userId"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Study room metadata"
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages for a specific room"
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": "Session",
+      "description": "User study history records"
+    }
+  }
+}

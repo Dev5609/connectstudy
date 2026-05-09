@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -5,17 +6,38 @@ import { Play, Pause, RotateCcw, Settings2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
+import { useFirestore, useUser } from "@/firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 
 type TimerMode = "infinite" | "custom" | "pomodoro"
 
-export function FocusTimer() {
+interface FocusTimerProps {
+  roomContext?: string
+}
+
+export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps) {
+  const { user } = useUser()
+  const db = useFirestore()
+  
   const [mode, setMode] = useState<TimerMode>("pomodoro")
   const [timeLeft, setTimeLeft] = useState(25 * 60)
   const [isActive, setIsActive] = useState(false)
   const [isBreak, setIsBreak] = useState(false)
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+
+  const saveSession = useCallback(async (durationSeconds: number) => {
+    if (!db || !user || durationSeconds < 60) return
+
+    addDoc(collection(db, "users", user.uid, "sessions"), {
+      title: roomContext,
+      durationMinutes: Math.floor(durationSeconds / 60),
+      type: mode,
+      timestamp: serverTimestamp(),
+      userId: user.uid
+    })
+  }, [db, user, roomContext, mode])
 
   const playBeep = useCallback(() => {
-    // 1-second soft beep placeholder
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
     const oscillator = audioCtx.createOscillator()
     const gainNode = audioCtx.createGain()
@@ -37,6 +59,8 @@ export function FocusTimer() {
     let interval: any = null
 
     if (isActive) {
+      if (!sessionStartTime) setSessionStartTime(Date.now())
+      
       interval = setInterval(() => {
         if (mode === "infinite") {
           setTimeLeft((prev) => prev + 1)
@@ -46,9 +70,16 @@ export function FocusTimer() {
               clearInterval(interval)
               setIsActive(false)
               playBeep()
+              
+              if (!isBreak) {
+                const totalSecs = mode === "pomodoro" ? 25 * 60 : 40 * 60
+                saveSession(totalSecs)
+              }
+
               if (mode === "pomodoro") {
-                setIsBreak(!isBreak)
-                return isBreak ? 25 * 60 : 5 * 60
+                const nextIsBreak = !isBreak
+                setIsBreak(nextIsBreak)
+                return nextIsBreak ? 5 * 60 : 25 * 60
               }
               return 0
             }
@@ -57,11 +88,16 @@ export function FocusTimer() {
         }
       }, 1000)
     } else {
+      if (sessionStartTime && mode === "infinite") {
+        const duration = Math.floor((Date.now() - sessionStartTime) / 1000)
+        saveSession(duration)
+        setSessionStartTime(null)
+      }
       clearInterval(interval)
     }
 
     return () => clearInterval(interval)
-  }, [isActive, mode, isBreak, playBeep])
+  }, [isActive, mode, isBreak, playBeep, saveSession, sessionStartTime])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(Math.abs(seconds) / 60)
@@ -71,6 +107,7 @@ export function FocusTimer() {
 
   const resetTimer = () => {
     setIsActive(false)
+    setSessionStartTime(null)
     if (mode === "infinite") setTimeLeft(0)
     else if (mode === "custom") setTimeLeft(40 * 60)
     else setTimeLeft(25 * 60)
@@ -80,6 +117,7 @@ export function FocusTimer() {
     const newMode = val as TimerMode
     setMode(newMode)
     setIsActive(false)
+    setSessionStartTime(null)
     if (newMode === "infinite") setTimeLeft(0)
     else if (newMode === "custom") setTimeLeft(40 * 60)
     else setTimeLeft(25 * 60)

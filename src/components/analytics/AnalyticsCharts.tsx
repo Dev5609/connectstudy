@@ -1,18 +1,14 @@
+
 "use client"
 
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts"
+import { Bar, BarChart, XAxis, CartesianGrid } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useMemo } from "react"
 
-const data = [
-  { day: "Mon", focus: 320 },
-  { day: "Tue", focus: 450 },
-  { day: "Wed", focus: 210 },
-  { day: "Thu", focus: 380 },
-  { day: "Fri", focus: 510 },
-  { day: "Sat", focus: 150 },
-  { day: "Sun", focus: 120 },
-]
+interface AnalyticsChartsProps {
+  sessions?: any[]
+}
 
 const chartConfig = {
   focus: {
@@ -21,17 +17,38 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function AnalyticsCharts() {
+export function AnalyticsCharts({ sessions = [] }: AnalyticsChartsProps) {
+  const chartData = useMemo(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const data = days.map(day => ({ day, focus: 0 }))
+    
+    sessions.forEach(session => {
+      const date = session.timestamp?.toDate()
+      if (date) {
+        const dayName = days[date.getDay()]
+        const entry = data.find(d => d.day === dayName)
+        if (entry) entry.focus += session.durationMinutes || 0
+      }
+    })
+    
+    return data
+  }, [sessions])
+
+  const totalFocusHours = useMemo(() => {
+    const totalMins = chartData.reduce((acc, d) => acc + d.focus, 0)
+    return (totalMins / 60).toFixed(1)
+  }, [chartData])
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card className="col-span-2 border-2">
         <CardHeader>
           <CardTitle className="text-sm font-bold uppercase tracking-widest">Weekly Activity</CardTitle>
-          <CardDescription>Total focus time per day (minutes)</CardDescription>
+          <CardDescription>Focus time per day of the week (minutes)</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <BarChart data={data}>
+            <BarChart data={chartData}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
               <XAxis 
                 dataKey="day" 
@@ -53,17 +70,17 @@ export function AnalyticsCharts() {
 
       <div className="grid grid-cols-1 gap-6 col-span-2">
         <Card className="border-2 flex flex-col justify-center p-6 bg-primary text-primary-foreground">
-          <span className="text-xs uppercase tracking-[0.2em] opacity-80">Current Streak</span>
+          <span className="text-xs uppercase tracking-[0.2em] opacity-80">Total Tracked</span>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-6xl font-black tracking-tighter">12</span>
-            <span className="text-sm font-bold uppercase">Days</span>
+            <span className="text-6xl font-black tracking-tighter">{sessions.length}</span>
+            <span className="text-sm font-bold uppercase">Sessions</span>
           </div>
         </Card>
         
         <Card className="border-2 p-6 flex flex-col justify-center">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Avg. Daily Focus</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Weekly Total</span>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-5xl font-black tracking-tighter">5.4</span>
+            <span className="text-5xl font-black tracking-tighter">{totalFocusHours}</span>
             <span className="text-sm font-bold uppercase">Hours</span>
           </div>
         </Card>
