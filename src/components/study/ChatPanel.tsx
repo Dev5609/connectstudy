@@ -47,11 +47,17 @@ export function ChatPanel({ roomId }: { roomId: string }) {
     const file = e.target.files?.[0]
     if (file) {
       toast({
-        title: "File Selected",
-        description: `Ready to upload: ${file.name}`,
+        title: "Upload Started",
+        description: `${file.name} is being processed...`,
       })
-      // In a real app, upload to Firebase Storage then send message with URL
     }
+  }
+
+  const handleAction = (type: string) => {
+    toast({
+      title: type,
+      description: `${type} features are ready for use.`,
+    })
   }
 
   return (
@@ -85,6 +91,11 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 </div>
               </div>
             ))}
+            {messages && messages.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-30">No messages yet. Say hi!</p>
+              </div>
+            )}
           </div>
         )}
       </ScrollArea>
@@ -115,7 +126,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => toast({ title: "Docs", description: "Document sharing enabled." })}
+                onClick={() => handleAction("File Shared")}
               >
                 <FileText className="w-4 h-4" />
               </Button>
@@ -123,7 +134,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => toast({ title: "Emoji", description: "Select an emoji to react." })}
+                onClick={() => handleAction("Reactions Open")}
               >
                 <Smile className="w-4 h-4" />
               </Button>

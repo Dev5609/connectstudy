@@ -13,6 +13,12 @@
       "imageHint": "library books"
     },
     {
+      "id": "study-3",
+      "description": "Coffee shop study",
+      "imageUrl": "https://picsum.photos/seed/study3/800/600",
+      "imageHint": "coffee shop"
+    },
+    {
       "id": "avatar-1",
       "description": "User profile 1",
       "imageUrl": "https://picsum.photos/seed/u1/100/100",
