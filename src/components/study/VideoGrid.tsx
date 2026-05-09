@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,6 +24,8 @@ export function VideoGrid() {
 
   const [isMicOn, setIsMicOn] = useState(true)
   const [isVideoOn, setIsVideoOn] = useState(true)
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const participantsQuery = useMemoFirebase(() => {
     if (!db || !roomId) return null
@@ -32,6 +34,50 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
+  // Handle local media capture
+  useEffect(() => {
+    let stream: MediaStream | null = null
+
+    async function setupMedia() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        })
+        setLocalStream(stream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+      } catch (err) {
+        console.error("Error accessing media devices:", err)
+        toast({
+          variant: "destructive",
+          title: "Media Error",
+          description: "Could not access camera or microphone.",
+        })
+      }
+    }
+
+    if (isVideoOn || isMicOn) {
+      setupMedia()
+    }
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+      }
+    }
+  }, [])
+
+  // Update tracks when toggles change
+  useEffect(() => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach((track) => (track.enabled = isVideoOn))
+      localStream.getAudioTracks().forEach((track) => (track.enabled = isMicOn))
+    }
+  }, [isVideoOn, isMicOn, localStream])
+
+  // Sync state to Firestore
   useEffect(() => {
     if (!db || !user || !roomId) return
 
@@ -49,21 +95,11 @@ export function VideoGrid() {
     return () => {
       deleteDoc(participantRef).catch(() => {})
     }
-  }, [db, user, roomId])
-
-  const updateMediaState = (mic: boolean, video: boolean) => {
-    if (!db || !user || !roomId) return
-    const participantRef = doc(db, "rooms", roomId, "participants", user.uid)
-    updateDoc(participantRef, {
-      isMicOn: mic,
-      isVideoOn: video
-    }).catch(() => {})
-  }
+  }, [db, user, roomId, isMicOn, isVideoOn])
 
   const toggleMic = () => {
     const nextState = !isMicOn
     setIsMicOn(nextState)
-    updateMediaState(nextState, isVideoOn)
     toast({
       title: nextState ? "Microphone On" : "Microphone Muted",
       variant: nextState ? "default" : "destructive",
@@ -73,7 +109,6 @@ export function VideoGrid() {
   const toggleVideo = () => {
     const nextState = !isVideoOn
     setIsVideoOn(nextState)
-    updateMediaState(isMicOn, nextState)
     toast({
       title: nextState ? "Camera On" : "Camera Off",
       variant: nextState ? "default" : "destructive",
@@ -100,18 +135,42 @@ export function VideoGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {participants?.map((p: any) => (
           <div key={p.id} className="relative aspect-video bg-muted group overflow-hidden border-2">
-            {p.isVideoOn ? (
-               <img 
-                 src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
-                 alt={p.name} 
-                 className={`w-full h-full object-cover transition-all duration-500 ${p.id !== user?.uid ? 'grayscale' : ''}`}
-               />
+            {p.id === user?.uid ? (
+              // Local Participant Video
+              <div className="relative w-full h-full bg-black">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover transition-all duration-500 ${!isVideoOn ? 'hidden' : ''}`}
+                />
+                {!isVideoOn && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-secondary">
+                    <Avatar className="w-16 h-16 border-2 border-background shadow-lg">
+                      <AvatarImage src={user.photoURL || ""} />
+                      <AvatarFallback className="font-bold text-xl">{user.displayName?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="flex items-center justify-center h-full bg-secondary">
-                 <Avatar className="w-16 h-16 border-2 border-background shadow-lg">
-                  <AvatarImage src={p.photoURL} />
-                  <AvatarFallback className="font-bold text-xl">{p.name?.[0]}</AvatarFallback>
-                </Avatar>
+              // Remote Participant Placeholder (In a real app, this would be a WebRTC stream)
+              <div className="relative w-full h-full">
+                {p.isVideoOn ? (
+                   <img 
+                     src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
+                     alt={p.name} 
+                     className="w-full h-full object-cover grayscale"
+                   />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-secondary">
+                     <Avatar className="w-16 h-16 border-2 border-background shadow-lg">
+                      <AvatarImage src={p.photoURL} />
+                      <AvatarFallback className="font-bold text-xl">{p.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
               </div>
             )}
             

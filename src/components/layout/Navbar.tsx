@@ -102,24 +102,31 @@ export function Navbar() {
       image: `https://picsum.photos/seed/${Math.random()}/800/600`
     }
 
-    addDoc(collection(db, "rooms"), roomData)
-      .then((docRef) => {
-        setIsRoomDialogOpen(false)
-        setNewRoomName("")
-        setNewRoomTopic("")
-        router.push(`/rooms/${docRef.id}`)
+    try {
+      const docRef = await addDoc(collection(db, "rooms"), roomData)
+      setIsRoomDialogOpen(false)
+      setNewRoomName("")
+      setNewRoomTopic("")
+      router.push(`/rooms/${docRef.id}`)
+      toast({
+        title: "Room Created",
+        description: `Successfully launched ${newRoomName}.`,
       })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: "rooms",
-          operation: "create",
-          requestResourceData: roomData,
-        })
-        errorEmitter.emit("permission-error", permissionError)
+    } catch (error: any) {
+      const permissionError = new FirestorePermissionError({
+        path: "rooms",
+        operation: "create",
+        requestResourceData: roomData,
       })
-      .finally(() => {
-        setIsCreating(false)
+      errorEmitter.emit("permission-error", permissionError)
+      toast({
+        variant: "destructive",
+        title: "Creation Failed",
+        description: error.message || "Could not create the room.",
       })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   return (
