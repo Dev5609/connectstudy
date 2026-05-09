@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "study-1",
+      "description": "Minimalist desk setup",
+      "imageUrl": "https://picsum.photos/seed/study1/800/600",
+      "imageHint": "minimalist workspace"
+    },
+    {
+      "id": "study-2",
+      "description": "Library atmosphere",
+      "imageUrl": "https://picsum.photos/seed/study2/800/600",
+      "imageHint": "library books"
+    },
+    {
+      "id": "avatar-1",
+      "description": "User profile 1",
+      "imageUrl": "https://picsum.photos/seed/u1/100/100",
+      "imageHint": "portrait"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User profile 2",
+      "imageUrl": "https://picsum.photos/seed/u2/100/100",
+      "imageHint": "portrait"
+    }
+  ]
+}
