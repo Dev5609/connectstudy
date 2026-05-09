@@ -2,10 +2,15 @@
 "use client"
 
 import Link from "next/link"
-import { Monitor, BarChart3, Settings, BookOpen, Plus, LogOut } from "lucide-react"
+import { BookOpen, Plus, LogOut, User as UserIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth, useUser, useFirestore } from "@/firebase"
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  updateProfile 
+} from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Dialog,
@@ -18,29 +23,63 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export function Navbar() {
   const { user } = useUser()
   const auth = useAuth()
   const db = useFirestore()
   const router = useRouter()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { toast } = useToast()
+
+  const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  
+  // Room State
   const [newRoomName, setNewRoomName] = useState("")
   const [newRoomTopic, setNewRoomTopic] = useState("")
   const [isCreating, setIsCreating] = useState(false)
 
-  const handleLogin = async () => {
+  // Auth State
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!auth) return
-    const provider = new GoogleAuthProvider()
+    setIsAuthLoading(true)
     try {
-      await signInWithPopup(auth, provider)
-    } catch (error) {
-      console.error("Login failed", error)
+      await signInWithEmailAndPassword(auth, email, password)
+      setIsAuthDialogOpen(false)
+      toast({ title: "Welcome back!", description: "Logged in successfully." })
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Login failed", description: error.message })
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auth) return
+    setIsAuthLoading(true)
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      await updateProfile(userCredential.user, { displayName: name })
+      setIsAuthDialogOpen(false)
+      toast({ title: "Welcome!", description: "Account created successfully." })
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Registration failed", description: error.message })
+    } finally {
+      setIsAuthLoading(false)
     }
   }
 
@@ -66,7 +105,7 @@ export function Navbar() {
 
     addDoc(collection(db, "rooms"), roomData)
       .then((docRef) => {
-        setIsDialogOpen(false)
+        setIsRoomDialogOpen(false)
         setNewRoomName("")
         setNewRoomTopic("")
         router.push(`/rooms/${docRef.id}`)
@@ -102,7 +141,7 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isRoomDialogOpen} onOpenChange={setIsRoomDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
                     <Plus className="w-4 h-4" />
@@ -156,6 +195,10 @@ export function Navbar() {
                   <AvatarImage src={user.photoURL || ""} />
                   <AvatarFallback>{user.displayName?.[0] || "U"}</AvatarFallback>
                 </Avatar>
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-tight leading-none">{user.displayName || "User"}</span>
+                  <span className="text-[9px] text-muted-foreground uppercase">{user.email}</span>
+                </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs uppercase font-bold tracking-widest opacity-60 hover:opacity-100">
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -163,9 +206,94 @@ export function Navbar() {
               </div>
             </>
           ) : (
-            <Button variant="default" size="sm" onClick={handleLogin}>
-              Login with Google
-            </Button>
+            <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="default" size="sm">
+                  Sign In / Register
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                  <DialogTitle className="font-black uppercase tracking-tighter text-2xl">ConnectStudy</DialogTitle>
+                  <DialogDescription className="text-[10px] uppercase tracking-widest">
+                    Access your personalized study environment.
+                  </DialogDescription>
+                </DialogHeader>
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="login" className="text-[10px] uppercase font-bold tracking-widest">Login</TabsTrigger>
+                    <TabsTrigger value="register" className="text-[10px] uppercase font-bold tracking-widest">Register</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="login">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="email-login" className="text-[10px] font-bold uppercase tracking-widest">Email</Label>
+                        <Input 
+                          id="email-login" 
+                          type="email" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          placeholder="name@example.com" 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="password-login" className="text-[10px] font-bold uppercase tracking-widest">Password</Label>
+                        <Input 
+                          id="password-login" 
+                          type="password" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          required 
+                        />
+                      </div>
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest">
+                        {isAuthLoading ? "Authenticating..." : "Enter Workspace"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  <TabsContent value="register">
+                    <form onSubmit={handleRegister} className="space-y-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="name-reg" className="text-[10px] font-bold uppercase tracking-widest">Full Name</Label>
+                        <Input 
+                          id="name-reg" 
+                          type="text" 
+                          value={name} 
+                          onChange={(e) => setName(e.target.value)} 
+                          placeholder="John Doe" 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="email-reg" className="text-[10px] font-bold uppercase tracking-widest">Email</Label>
+                        <Input 
+                          id="email-reg" 
+                          type="email" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          placeholder="name@example.com" 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="password-reg" className="text-[10px] font-bold uppercase tracking-widest">Password</Label>
+                        <Input 
+                          id="password-reg" 
+                          type="password" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          required 
+                        />
+                      </div>
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest">
+                        {isAuthLoading ? "Creating Account..." : "Create Profile"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
