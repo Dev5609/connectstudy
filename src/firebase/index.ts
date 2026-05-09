@@ -8,8 +8,8 @@ import { firebaseConfig } from './config';
 export function initializeFirebase() {
   let firebaseApp: FirebaseApp;
 
-  // Check if all required config values are present to avoid "invalid-api-key" errors
-  const isConfigValid = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'undefined';
+  // Check if all required config values are present
+  const isConfigValid = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'undefined' && firebaseConfig.apiKey !== 'pending';
 
   if (getApps().length > 0) {
     firebaseApp = getApp();
