@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -21,11 +22,13 @@ import { useState } from "react"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
+import { useRouter } from "next/navigation"
 
 export function Navbar() {
   const { user } = useUser()
   const auth = useAuth()
   const db = useFirestore()
+  const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newRoomName, setNewRoomName] = useState("")
   const [newRoomTopic, setNewRoomTopic] = useState("")
@@ -44,6 +47,7 @@ export function Navbar() {
   const handleLogout = async () => {
     if (!auth) return
     await signOut(auth)
+    router.push("/")
   }
 
   const handleCreateRoom = async () => {
@@ -61,10 +65,11 @@ export function Navbar() {
     }
 
     addDoc(collection(db, "rooms"), roomData)
-      .then(() => {
+      .then((docRef) => {
         setIsDialogOpen(false)
         setNewRoomName("")
         setNewRoomTopic("")
+        router.push(`/rooms/${docRef.id}`)
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({

@@ -8,6 +8,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { useFirestore, useUser } from "@/firebase"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type TimerMode = "infinite" | "custom" | "pomodoro"
 
@@ -24,6 +31,10 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   const [isActive, setIsActive] = useState(false)
   const [isBreak, setIsBreak] = useState(false)
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+  
+  const [pomoDuration, setPomoDuration] = useState(25)
+  const [breakDuration, setBreakDuration] = useState(5)
+  const [customDuration, setCustomDuration] = useState(40)
 
   const saveSession = useCallback(async (durationSeconds: number) => {
     if (!db || !user || durationSeconds < 60) return
@@ -38,6 +49,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   }, [db, user, roomContext, mode])
 
   const playBeep = useCallback(() => {
+    if (typeof window === "undefined") return
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
     const oscillator = audioCtx.createOscillator()
     const gainNode = audioCtx.createGain()
@@ -72,14 +84,14 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
               playBeep()
               
               if (!isBreak) {
-                const totalSecs = mode === "pomodoro" ? 25 * 60 : 40 * 60
+                const totalSecs = mode === "pomodoro" ? pomoDuration * 60 : customDuration * 60
                 saveSession(totalSecs)
               }
 
               if (mode === "pomodoro") {
                 const nextIsBreak = !isBreak
                 setIsBreak(nextIsBreak)
-                return nextIsBreak ? 5 * 60 : 25 * 60
+                return nextIsBreak ? breakDuration * 60 : pomoDuration * 60
               }
               return 0
             }
@@ -97,7 +109,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
     }
 
     return () => clearInterval(interval)
-  }, [isActive, mode, isBreak, playBeep, saveSession, sessionStartTime])
+  }, [isActive, mode, isBreak, playBeep, saveSession, sessionStartTime, pomoDuration, breakDuration, customDuration])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(Math.abs(seconds) / 60)
@@ -109,8 +121,8 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
     setIsActive(false)
     setSessionStartTime(null)
     if (mode === "infinite") setTimeLeft(0)
-    else if (mode === "custom") setTimeLeft(40 * 60)
-    else setTimeLeft(25 * 60)
+    else if (mode === "custom") setTimeLeft(customDuration * 60)
+    else setTimeLeft(isBreak ? breakDuration * 60 : pomoDuration * 60)
   }
 
   const handleModeChange = (val: string) => {
@@ -119,8 +131,8 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
     setIsActive(false)
     setSessionStartTime(null)
     if (newMode === "infinite") setTimeLeft(0)
-    else if (newMode === "custom") setTimeLeft(40 * 60)
-    else setTimeLeft(25 * 60)
+    else if (newMode === "custom") setTimeLeft(customDuration * 60)
+    else setTimeLeft(pomoDuration * 60)
   }
 
   return (
@@ -159,13 +171,52 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
         >
           {isActive ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
         </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-12 w-12 border-2"
-        >
-          <Settings2 className="w-5 h-5" />
-        </Button>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-12 w-12 border-2"
+            >
+              <Settings2 className="w-5 h-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest">Timer Settings</h4>
+            <div className="grid gap-2">
+              <Label htmlFor="pomo" className="text-[10px] uppercase font-bold">Pomo (min)</Label>
+              <Input 
+                id="pomo" 
+                type="number" 
+                value={pomoDuration} 
+                onChange={(e) => setPomoDuration(Number(e.target.value))} 
+                className="h-8 text-xs"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="break" className="text-[10px] uppercase font-bold">Break (min)</Label>
+              <Input 
+                id="break" 
+                type="number" 
+                value={breakDuration} 
+                onChange={(e) => setBreakDuration(Number(e.target.value))} 
+                className="h-8 text-xs"
+              />
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="fixed" className="text-[10px] uppercase font-bold">Fixed (min)</Label>
+              <Input 
+                id="fixed" 
+                type="number" 
+                value={customDuration} 
+                onChange={(e) => setCustomDuration(Number(e.target.value))} 
+                className="h-8 text-xs"
+              />
+            </div>
+            <Button className="w-full text-[10px] uppercase font-bold" onClick={resetTimer}>Apply & Reset</Button>
+          </PopoverContent>
+        </Popover>
       </div>
     </Card>
   )

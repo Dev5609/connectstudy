@@ -1,9 +1,11 @@
+
 "use client"
 
 import { useState } from "react"
 import { Mic, MicOff, Video, VideoOff, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/hooks/use-toast"
 
 const participants = [
   { id: 1, name: "You", status: "Focusing", image: "https://picsum.photos/seed/u1/200/200" },
@@ -14,6 +16,23 @@ const participants = [
 export function VideoGrid() {
   const [isMicOn, setIsMicOn] = useState(true)
   const [isVideoOn, setIsVideoOn] = useState(true)
+  const { toast } = useToast()
+
+  const toggleMic = () => {
+    setIsMicOn(!isMicOn)
+    toast({
+      title: !isMicOn ? "Microphone On" : "Microphone Muted",
+      variant: !isMicOn ? "default" : "destructive",
+    })
+  }
+
+  const toggleVideo = () => {
+    setIsVideoOn(!isVideoOn)
+    toast({
+      title: !isVideoOn ? "Camera On" : "Camera Off",
+      variant: !isVideoOn ? "default" : "destructive",
+    })
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
@@ -59,7 +78,7 @@ export function VideoGrid() {
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
-          onClick={() => setIsMicOn(!isMicOn)}
+          onClick={toggleMic}
           className="rounded-full h-12 w-12 border-2"
         >
           {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
@@ -67,13 +86,18 @@ export function VideoGrid() {
         <Button 
           variant={isVideoOn ? "outline" : "destructive"} 
           size="icon" 
-          onClick={() => setIsVideoOn(!isVideoOn)}
+          onClick={toggleVideo}
           className="rounded-full h-12 w-12 border-2"
         >
           {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </Button>
         <div className="w-px h-8 bg-border" />
-        <Button variant="outline" size="icon" className="rounded-full h-12 w-12 border-2">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full h-12 w-12 border-2"
+          onClick={() => toast({ title: "Menu", description: "Advanced settings coming soon." })}
+        >
           <MoreVertical className="w-5 h-5" />
         </Button>
       </div>

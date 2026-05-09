@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Navbar } from "@/components/layout/Navbar"
 import { FocusTimer } from "@/components/study/FocusTimer"
 import { VideoGrid } from "@/components/study/VideoGrid"
@@ -11,9 +11,12 @@ import { Share2, LogOut, Info, Loader2 } from "lucide-react"
 import { useDoc, useFirestore } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { useMemo } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function StudyRoomPage() {
   const params = useParams()
+  const router = useRouter()
+  const { toast } = useToast()
   const roomId = params.roomId as string
   const db = useFirestore()
 
@@ -23,6 +26,20 @@ export default function StudyRoomPage() {
   }, [db, roomId])
 
   const { data: room, loading } = useDoc(roomDocRef)
+
+  const handleShare = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href)
+      toast({
+        title: "Link copied!",
+        description: "Invite others by sharing this URL.",
+      })
+    }
+  }
+
+  const handleLeave = () => {
+    router.push("/")
+  }
 
   if (loading) {
     return (
@@ -39,7 +56,7 @@ export default function StudyRoomPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-black uppercase">Room Not Found</h1>
-            <Button asChild><a href="/">Return Dashboard</a></Button>
+            <Button onClick={() => router.push("/")}>Return Dashboard</Button>
           </div>
         </div>
       </div>
@@ -66,15 +83,13 @@ export default function StudyRoomPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleShare}>
                 <Share2 className="w-4 h-4" />
                 Invite
               </Button>
-              <Button variant="destructive" size="sm" className="gap-2" asChild>
-                <a href="/">
-                  <LogOut className="w-4 h-4" />
-                  Leave
-                </a>
+              <Button variant="destructive" size="sm" className="gap-2" onClick={handleLeave}>
+                <LogOut className="w-4 h-4" />
+                Leave
               </Button>
             </div>
           </div>

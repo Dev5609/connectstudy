@@ -9,10 +9,12 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCollection, useFirestore, useUser } from "@/firebase"
 import { collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore"
+import { useToast } from "@/hooks/use-toast"
 
 export function ChatPanel({ roomId }: { roomId: string }) {
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   const [inputValue, setInputValue] = useState("")
 
   const messagesQuery = useMemo(() => {
@@ -39,6 +41,13 @@ export function ChatPanel({ roomId }: { roomId: string }) {
 
     addDoc(collection(db, "rooms", roomId, "messages"), messageData)
     setInputValue("")
+  }
+
+  const handleMockAction = (action: string) => {
+    toast({
+      title: "Action Not Available",
+      description: `${action} support is coming in a future update.`,
+    })
   }
 
   return (
@@ -84,13 +93,28 @@ export function ChatPanel({ roomId }: { roomId: string }) {
         ) : (
           <>
             <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => handleMockAction("Image sharing")}
+              >
                 <ImageIcon className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => handleMockAction("File attachment")}
+              >
                 <FileText className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => handleMockAction("Emojis")}
+              >
                 <Smile className="w-4 h-4" />
               </Button>
             </div>
