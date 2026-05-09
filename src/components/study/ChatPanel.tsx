@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useRef } from "react"
 import { Send, Image as ImageIcon, FileText, Smile, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase"
 import { collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 export function ChatPanel({ roomId }: { roomId: string }) {
   const { user } = useUser()
@@ -28,14 +33,14 @@ export function ChatPanel({ roomId }: { roomId: string }) {
 
   const { data: messages, loading } = useCollection(messagesQuery)
 
-  const sendMessage = async () => {
-    if (!inputValue.trim() || !db || !user || !roomId) return
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || !db || !user || !roomId) return
     
     const messageData = {
       userId: user.uid,
       userName: user.displayName || "Anonymous",
       userAvatar: user.photoURL || "",
-      content: inputValue,
+      content: content,
       timestamp: serverTimestamp()
     }
 
@@ -46,18 +51,17 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Functional: We simulate a file share message since we don't have storage yet
+      sendMessage(`Sent a file: ${file.name}`)
       toast({
-        title: "Upload Started",
-        description: `${file.name} is being processed...`,
+        title: "File Shared",
+        description: `${file.name} was shared in chat.`,
       })
     }
   }
 
-  const handleAction = (type: string) => {
-    toast({
-      title: type,
-      description: `${type} features are ready for use.`,
-    })
+  const sendEmoji = (emoji: string) => {
+    sendMessage(emoji)
   }
 
   return (
@@ -122,21 +126,29 @@ export function ChatPanel({ roomId }: { roomId: string }) {
               >
                 <ImageIcon className="w-4 h-4" />
               </Button>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Smile className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-2 flex gap-2">
+                  {['🔥', '👏', '💯', '👋', '✅'].map(emoji => (
+                    <Button key={emoji} variant="ghost" size="sm" onClick={() => sendEmoji(emoji)}>
+                      {emoji}
+                    </Button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => handleAction("File Shared")}
+                onClick={() => sendMessage("Let's focus on the task!")}
               >
                 <FileText className="w-4 h-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => handleAction("Reactions Open")}
-              >
-                <Smile className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex gap-2">
@@ -145,9 +157,9 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 className="flex-1 text-sm bg-background border-2 rounded-none" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage(inputValue)}
               />
-              <Button size="icon" className="shrink-0 rounded-none" onClick={sendMessage}>
+              <Button size="icon" className="shrink-0 rounded-none" onClick={() => sendMessage(inputValue)}>
                 <Send className="w-4 h-4" />
               </Button>
             </div>

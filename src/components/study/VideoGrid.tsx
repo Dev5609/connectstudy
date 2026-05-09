@@ -1,13 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2 } from "lucide-react"
+import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, doc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { useParams } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function VideoGrid() {
   const { user } = useUser()
@@ -72,6 +78,13 @@ export function VideoGrid() {
       title: nextState ? "Camera On" : "Camera Off",
       variant: nextState ? "default" : "destructive",
     })
+  }
+
+  const changeStatus = (newStatus: string) => {
+    if (!db || !user || !roomId) return
+    const participantRef = doc(db, "rooms", roomId, "participants", user.uid)
+    updateDoc(participantRef, { status: newStatus })
+    toast({ title: `Status updated: ${newStatus}` })
   }
 
   if (loading) {
@@ -140,14 +153,23 @@ export function VideoGrid() {
           {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </Button>
         <div className="w-px h-8 bg-border" />
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="rounded-none h-12 w-12 border-2"
-          onClick={() => toast({ title: "Room Settings", description: "This room is currently optimized for deep focus." })}
-        >
-          <MoreVertical className="w-5 h-5" />
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="rounded-none h-12 w-12 border-2">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => changeStatus("Deep Work")}>Set Status: Deep Work</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Reading")}>Set Status: Reading</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Coffee Break")}>Set Status: Break</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => toast({ title: "Room Rules", description: "Minimal distraction environment enabled." })}>
+              <Info className="w-4 h-4 mr-2" />
+              Room Info
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )

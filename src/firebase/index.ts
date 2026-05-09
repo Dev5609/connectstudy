@@ -11,11 +11,13 @@ export function initializeFirebase() {
   if (getApps().length > 0) {
     firebaseApp = getApp();
   } else {
-    // If apiKey is missing, it will throw a meaningful error or we can handle it
-    if (!firebaseConfig.apiKey) {
-      console.warn("Firebase configuration is missing. Please check your environment variables.");
-    }
-    firebaseApp = initializeApp(firebaseConfig);
+    // Initialize with a fallback empty string if env vars are missing to prevent total crash
+    // although Auth will still fail if keys are invalid, this allows the UI to at least render.
+    const config = {
+      ...firebaseConfig,
+      apiKey: firebaseConfig.apiKey || "",
+    };
+    firebaseApp = initializeApp(config);
   }
 
   const firestore: Firestore = getFirestore(firebaseApp);
