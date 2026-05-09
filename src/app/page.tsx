@@ -4,13 +4,14 @@ import { Navbar } from "@/components/layout/Navbar"
 import { FocusTimer } from "@/components/study/FocusTimer"
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Plus, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
+import { BookOpen, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
 import { collection, query, limit, orderBy } from "firebase/firestore"
 
 export default function Home() {
   const db = useFirestore()
+  const { user } = useUser()
   
   const roomsQuery = useMemoFirebase(() => {
     if (!db) return null
@@ -39,7 +40,7 @@ export default function Home() {
             <div className="flex flex-col gap-3">
               <Button size="lg" className="justify-between group" asChild>
                 <a href="#active-rooms">
-                  Join a Room
+                  Explore Rooms
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </a>
               </Button>
@@ -84,7 +85,7 @@ export default function Home() {
 
         <section className="space-y-6">
           <div className="flex items-center justify-between border-b-2 pb-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Your Productivity</h2>
+            <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Temporal Productivity</h2>
             <Link href="/analytics" className="text-xs font-bold uppercase hover:underline">Full Report</Link>
           </div>
           <AnalyticsCharts />
@@ -140,7 +141,7 @@ function RoomCard({ id, name, participants, type, topic, image }: { id: string, 
             </div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-dashed">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Join Session</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Enter Room</span>
             <ArrowRight className="w-4 h-4 -translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all" />
           </div>
         </div>

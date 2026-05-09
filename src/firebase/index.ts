@@ -11,11 +11,15 @@ export function initializeFirebase() {
   if (getApps().length > 0) {
     firebaseApp = getApp();
   } else {
-    // Initialize with a fallback empty string if env vars are missing to prevent total crash
-    // although Auth will still fail if keys are invalid, this allows the UI to at least render.
+    // We ensure that we don't pass undefined values to initializeApp if we can help it,
+    // although the error usually comes from getAuth failing on invalid keys.
     const config = {
-      ...firebaseConfig,
-      apiKey: firebaseConfig.apiKey || "",
+      apiKey: firebaseConfig.apiKey || "missing-api-key",
+      authDomain: firebaseConfig.authDomain || "",
+      projectId: firebaseConfig.projectId || "missing-project-id",
+      storageBucket: firebaseConfig.storageBucket || "",
+      messagingSenderId: firebaseConfig.messagingSenderId || "",
+      appId: firebaseConfig.appId || "",
     };
     firebaseApp = initializeApp(config);
   }

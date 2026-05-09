@@ -1,8 +1,7 @@
-
 "use client"
 
 import Link from "next/link"
-import { BookOpen, Plus, LogOut, User as UserIcon } from "lucide-react"
+import { BookOpen, Plus, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import { 
@@ -59,9 +58,9 @@ export function Navbar() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       setIsAuthDialogOpen(false)
-      toast({ title: "Welcome back!", description: "Logged in successfully." })
+      toast({ title: "Session Resumed", description: "Welcome back to your workspace." })
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Login failed", description: error.message })
+      toast({ variant: "destructive", title: "Access Denied", description: error.message })
     } finally {
       setIsAuthLoading(false)
     }
@@ -75,9 +74,9 @@ export function Navbar() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(userCredential.user, { displayName: name })
       setIsAuthDialogOpen(false)
-      toast({ title: "Welcome!", description: "Account created successfully." })
+      toast({ title: "Account Initialized", description: "Your study profile is ready." })
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Registration failed", description: error.message })
+      toast({ variant: "destructive", title: "Registration Failed", description: error.message })
     } finally {
       setIsAuthLoading(false)
     }
@@ -150,29 +149,29 @@ export function Navbar() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Create Study Room</DialogTitle>
+                    <DialogTitle className="font-black uppercase tracking-tighter">Launch Study Room</DialogTitle>
                     <DialogDescription className="text-xs uppercase tracking-widest">
-                      Start a new session and invite others to join.
+                      Set the focus for your new collaborative session.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest">Room Name</Label>
+                      <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest">Room Identity</Label>
                       <Input
                         id="name"
                         value={newRoomName}
                         onChange={(e) => setNewRoomName(e.target.value)}
-                        placeholder="Deep Focus Session"
+                        placeholder="e.g., Deep Focus Architecture"
                         className="border-2"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="topic" className="text-[10px] font-bold uppercase tracking-widest">Focus Topic</Label>
+                      <Label htmlFor="topic" className="text-[10px] font-bold uppercase tracking-widest">Core Topic</Label>
                       <Input
                         id="topic"
                         value={newRoomTopic}
                         onChange={(e) => setNewRoomTopic(e.target.value)}
-                        placeholder="UI Design / Coding / Reading"
+                        placeholder="e.g., UI Design / React Patterns"
                         className="border-2"
                       />
                     </div>
@@ -184,7 +183,7 @@ export function Navbar() {
                       disabled={isCreating || !newRoomName || !newRoomTopic}
                       className="w-full uppercase font-bold tracking-widest"
                     >
-                      {isCreating ? "Creating..." : "Launch Room"}
+                      {isCreating ? "Initializing..." : "Activate Workspace"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -196,12 +195,12 @@ export function Navbar() {
                   <AvatarFallback>{user.displayName?.[0] || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-tight leading-none">{user.displayName || "User"}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight leading-none">{user.displayName || "Scholar"}</span>
                   <span className="text-[9px] text-muted-foreground uppercase">{user.email}</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs uppercase font-bold tracking-widest opacity-60 hover:opacity-100">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  Exit
                 </Button>
               </div>
             </>
@@ -216,7 +215,7 @@ export function Navbar() {
                 <DialogHeader>
                   <DialogTitle className="font-black uppercase tracking-tighter text-2xl">ConnectStudy</DialogTitle>
                   <DialogDescription className="text-[10px] uppercase tracking-widest">
-                    Access your personalized study environment.
+                    Enter your credentials to access the study collective.
                   </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="login" className="w-full">
@@ -233,7 +232,7 @@ export function Navbar() {
                           type="email" 
                           value={email} 
                           onChange={(e) => setEmail(e.target.value)} 
-                          placeholder="name@example.com" 
+                          placeholder="scholar@example.com" 
                           required 
                         />
                       </div>
@@ -272,7 +271,7 @@ export function Navbar() {
                           type="email" 
                           value={email} 
                           onChange={(e) => setEmail(e.target.value)} 
-                          placeholder="name@example.com" 
+                          placeholder="scholar@example.com" 
                           required 
                         />
                       </div>
@@ -287,7 +286,7 @@ export function Navbar() {
                         />
                       </div>
                       <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest">
-                        {isAuthLoading ? "Creating Account..." : "Create Profile"}
+                        {isAuthLoading ? "Initialising..." : "Create Profile"}
                       </Button>
                     </form>
                   </TabsContent>
