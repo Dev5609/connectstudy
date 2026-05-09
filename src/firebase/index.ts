@@ -6,7 +6,18 @@ import { getAuth, Auth } from 'firebase/auth';
 import { firebaseConfig } from './config';
 
 export function initializeFirebase() {
-  const firebaseApp: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  let firebaseApp: FirebaseApp;
+
+  if (getApps().length > 0) {
+    firebaseApp = getApp();
+  } else {
+    // If apiKey is missing, it will throw a meaningful error or we can handle it
+    if (!firebaseConfig.apiKey) {
+      console.warn("Firebase configuration is missing. Please check your environment variables.");
+    }
+    firebaseApp = initializeApp(firebaseConfig);
+  }
+
   const firestore: Firestore = getFirestore(firebaseApp);
   const auth: Auth = getAuth(firebaseApp);
 

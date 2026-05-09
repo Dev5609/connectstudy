@@ -26,7 +26,6 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
-  // Presence logic: Register user as a participant
   useEffect(() => {
     if (!db || !user || !roomId) return
 
@@ -36,18 +35,16 @@ export function VideoGrid() {
       name: user.displayName || "Anonymous",
       photoURL: user.photoURL || "",
       joinedAt: serverTimestamp(),
-      isMicOn: true,
-      isVideoOn: true,
+      isMicOn: isMicOn,
+      isVideoOn: isVideoOn,
       status: "Focusing"
     }, { merge: true })
 
-    // Cleanup: Remove participant on disconnect/unmount
     return () => {
       deleteDoc(participantRef).catch(() => {})
     }
   }, [db, user, roomId])
 
-  // Sync local toggle state to Firestore
   const updateMediaState = (mic: boolean, video: boolean) => {
     if (!db || !user || !roomId) return
     const participantRef = doc(db, "rooms", roomId, "participants", user.uid)
@@ -125,7 +122,6 @@ export function VideoGrid() {
         )}
       </div>
 
-      {/* Controls Bar - Centered at the bottom of the section */}
       <div className="flex justify-center items-center gap-8 py-6 bg-background border-2 mt-4">
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
