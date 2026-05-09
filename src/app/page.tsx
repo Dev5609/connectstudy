@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Navbar } from "@/components/layout/Navbar"
@@ -7,14 +6,13 @@ import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts"
 import { Button } from "@/components/ui/button"
 import { Plus, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useCollection, useFirestore } from "@/firebase"
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
 import { collection, query, limit, orderBy } from "firebase/firestore"
-import { useMemo } from "react"
 
 export default function Home() {
   const db = useFirestore()
   
-  const roomsQuery = useMemo(() => {
+  const roomsQuery = useMemoFirebase(() => {
     if (!db) return null
     return query(collection(db, "rooms"), orderBy("createdAt", "desc"), limit(6))
   }, [db])
@@ -34,18 +32,16 @@ export default function Home() {
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
                 Join focused study rooms with friends and colleagues. 
-                Synchronized timers, low-latency video, and minimalist aesthetics.
+                Synchronized timers and minimalist aesthetics.
               </p>
             </div>
             
             <div className="flex flex-col gap-3">
-              <Button size="lg" className="justify-between group">
-                Join a Room
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button size="lg" variant="outline" className="justify-between">
-                Create Private Room
-                <Lock className="w-4 h-4" />
+              <Button size="lg" className="justify-between group" asChild>
+                <Link href="#active-rooms">
+                  Join a Room
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -55,10 +51,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-6">
+        <section id="active-rooms" className="space-y-6">
           <div className="flex items-center justify-between border-b-2 pb-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Active Study Rooms</h2>
-            <Link href="/rooms" className="text-xs font-bold uppercase hover:underline">View All</Link>
           </div>
           
           {loading ? (
@@ -73,15 +68,16 @@ export default function Home() {
                   id={room.id}
                   name={room.name} 
                   participants={room.participantCount || 0} 
-                  type={room.type} 
+                  type={room.type as any} 
                   topic={room.topic} 
                   image={room.image || `https://picsum.photos/seed/${room.id}/600/400`}
                 />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 border-2 border-dashed bg-muted/20">
-              <p className="text-sm font-bold uppercase tracking-widest opacity-40">No active rooms found. Start one to begin.</p>
+            <div className="text-center py-16 border-2 border-dashed bg-muted/20">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-40 mb-4">No active rooms found</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">Create a room from the navigation bar to start studying.</p>
             </div>
           )}
         </section>
@@ -98,6 +94,7 @@ export default function Home() {
       <footer className="border-t py-12 mt-12 bg-secondary/20">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 font-bold tracking-tighter">
+            <BookOpen className="w-5 h-5" />
             <span className="text-xl">ConnectStudy</span>
           </div>
           <div className="flex gap-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">
