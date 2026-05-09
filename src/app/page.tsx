@@ -4,7 +4,7 @@ import { Navbar } from "@/components/layout/Navbar"
 import { FocusTimer } from "@/components/study/FocusTimer"
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts"
 import { Button } from "@/components/ui/button"
-import { Plus, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
+import { BookOpen, Plus, Users, ArrowRight, Lock, Globe, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
 import { collection, query, limit, orderBy } from "firebase/firestore"
@@ -38,10 +38,10 @@ export default function Home() {
             
             <div className="flex flex-col gap-3">
               <Button size="lg" className="justify-between group" asChild>
-                <Link href="#active-rooms">
+                <a href="#active-rooms">
                   Join a Room
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </a>
               </Button>
             </div>
           </div>
