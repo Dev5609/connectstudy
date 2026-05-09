@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -48,25 +47,6 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
     })
   }, [db, user, roomContext, mode])
 
-  const playBeep = useCallback(() => {
-    if (typeof window === "undefined") return
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const oscillator = audioCtx.createOscillator()
-    const gainNode = audioCtx.createGain()
-
-    oscillator.connect(gainNode)
-    gainNode.connect(audioCtx.destination)
-
-    oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime)
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime)
-    gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1)
-    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1)
-
-    oscillator.start()
-    oscillator.stop(audioCtx.currentTime + 1)
-  }, [])
-
   useEffect(() => {
     let interval: any = null
 
@@ -81,7 +61,6 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
             if (prev <= 1) {
               clearInterval(interval)
               setIsActive(false)
-              playBeep()
               
               if (!isBreak) {
                 const totalSecs = mode === "pomodoro" ? pomoDuration * 60 : customDuration * 60
@@ -109,7 +88,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
     }
 
     return () => clearInterval(interval)
-  }, [isActive, mode, isBreak, playBeep, saveSession, sessionStartTime, pomoDuration, breakDuration, customDuration])
+  }, [isActive, mode, isBreak, saveSession, sessionStartTime, pomoDuration, breakDuration, customDuration])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(Math.abs(seconds) / 60)
@@ -136,20 +115,20 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   }
 
   return (
-    <Card className="p-8 border-none shadow-none flex flex-col items-center gap-6">
+    <Card className="p-8 border-2 border-primary/10 shadow-xl flex flex-col items-center gap-6 bg-card">
       <Tabs value={mode} onValueChange={handleModeChange} className="w-full max-w-xs">
         <TabsList className="grid w-full grid-cols-3 bg-secondary">
-          <TabsTrigger value="infinite" className="text-xs uppercase tracking-widest">Free</TabsTrigger>
-          <TabsTrigger value="custom" className="text-xs uppercase tracking-widest">Fixed</TabsTrigger>
-          <TabsTrigger value="pomodoro" className="text-xs uppercase tracking-widest">Pomo</TabsTrigger>
+          <TabsTrigger value="infinite" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Free</TabsTrigger>
+          <TabsTrigger value="custom" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Fixed</TabsTrigger>
+          <TabsTrigger value="pomodoro" className="text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:text-foreground">Pomo</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <div className="flex flex-col items-center gap-2">
-        <span className="text-8xl font-bold tracking-tighter font-mono">
+        <span className="text-8xl font-black tracking-tighter font-mono text-primary">
           {formatTime(timeLeft)}
         </span>
-        <span className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+        <span className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
           {mode === "infinite" ? "Flowing Time" : isBreak ? "Short Break" : "Deep Work"}
         </span>
       </div>
@@ -158,7 +137,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
         <Button 
           variant="outline" 
           size="icon" 
-          className="h-12 w-12 border-2" 
+          className="h-12 w-12 border-2 border-primary/20" 
           onClick={resetTimer}
         >
           <RotateCcw className="w-5 h-5" />
@@ -166,7 +145,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
         <Button 
           variant="default" 
           size="lg" 
-          className="h-16 w-16 rounded-full"
+          className="h-16 w-16 rounded-full bg-primary text-background hover:scale-105 transition-transform"
           onClick={() => setIsActive(!isActive)}
         >
           {isActive ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
@@ -177,12 +156,12 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
             <Button 
               variant="outline" 
               size="icon" 
-              className="h-12 w-12 border-2"
+              className="h-12 w-12 border-2 border-primary/20"
             >
               <Settings2 className="w-5 h-5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 space-y-4">
+          <PopoverContent className="w-64 space-y-4 bg-card border-primary/20">
             <h4 className="text-xs font-bold uppercase tracking-widest">Timer Settings</h4>
             <div className="grid gap-2">
               <Label htmlFor="pomo" className="text-[10px] uppercase font-bold">Pomo (min)</Label>
@@ -191,7 +170,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
                 type="number" 
                 value={pomoDuration} 
                 onChange={(e) => setPomoDuration(Number(e.target.value))} 
-                className="h-8 text-xs"
+                className="h-8 text-xs bg-background"
               />
             </div>
             <div className="grid gap-2">
@@ -201,17 +180,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
                 type="number" 
                 value={breakDuration} 
                 onChange={(e) => setBreakDuration(Number(e.target.value))} 
-                className="h-8 text-xs"
-              />
-            </div>
-             <div className="grid gap-2">
-              <Label htmlFor="fixed" className="text-[10px] uppercase font-bold">Fixed (min)</Label>
-              <Input 
-                id="fixed" 
-                type="number" 
-                value={customDuration} 
-                onChange={(e) => setCustomDuration(Number(e.target.value))} 
-                className="h-8 text-xs"
+                className="h-8 text-xs bg-background"
               />
             </div>
             <Button className="w-full text-[10px] uppercase font-bold" onClick={resetTimer}>Apply & Reset</Button>

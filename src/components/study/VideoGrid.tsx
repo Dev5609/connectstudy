@@ -34,7 +34,6 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
-  // Handle local media capture
   useEffect(() => {
     let stream: MediaStream | null = null
 
@@ -58,9 +57,7 @@ export function VideoGrid() {
       }
     }
 
-    if (isVideoOn || isMicOn) {
-      setupMedia()
-    }
+    setupMedia()
 
     return () => {
       if (stream) {
@@ -69,7 +66,6 @@ export function VideoGrid() {
     }
   }, [])
 
-  // Update tracks when toggles change
   useEffect(() => {
     if (localStream) {
       localStream.getVideoTracks().forEach((track) => (track.enabled = isVideoOn))
@@ -77,7 +73,6 @@ export function VideoGrid() {
     }
   }, [isVideoOn, isMicOn, localStream])
 
-  // Sync state to Firestore
   useEffect(() => {
     if (!db || !user || !roomId) return
 
@@ -98,33 +93,22 @@ export function VideoGrid() {
   }, [db, user, roomId, isMicOn, isVideoOn])
 
   const toggleMic = () => {
-    const nextState = !isMicOn
-    setIsMicOn(nextState)
-    toast({
-      title: nextState ? "Microphone On" : "Microphone Muted",
-      variant: nextState ? "default" : "destructive",
-    })
+    setIsMicOn(!isMicOn)
   }
 
   const toggleVideo = () => {
-    const nextState = !isVideoOn
-    setIsVideoOn(nextState)
-    toast({
-      title: nextState ? "Camera On" : "Camera Off",
-      variant: nextState ? "default" : "destructive",
-    })
+    setIsVideoOn(!isVideoOn)
   }
 
   const changeStatus = (newStatus: string) => {
     if (!db || !user || !roomId) return
     const participantRef = doc(db, "rooms", roomId, "participants", user.uid)
     updateDoc(participantRef, { status: newStatus })
-    toast({ title: `Status updated: ${newStatus}` })
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 border-2 border-dashed">
+      <div className="flex items-center justify-center h-48 border-2 border-dashed border-primary/20">
         <Loader2 className="w-6 h-6 animate-spin opacity-20" />
       </div>
     )
@@ -134,9 +118,8 @@ export function VideoGrid() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {participants?.map((p: any) => (
-          <div key={p.id} className="relative aspect-video bg-muted group overflow-hidden border-2">
+          <div key={p.id} className="relative aspect-video bg-muted group overflow-hidden border-2 border-primary/10">
             {p.id === user?.uid ? (
-              // Local Participant Video
               <div className="relative w-full h-full bg-black">
                 <video
                   ref={videoRef}
@@ -146,8 +129,8 @@ export function VideoGrid() {
                   className={`w-full h-full object-cover transition-all duration-500 ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-secondary">
-                    <Avatar className="w-16 h-16 border-2 border-background shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-card">
+                    <Avatar className="w-16 h-16 border-2 border-primary/20 shadow-lg">
                       <AvatarImage src={user.photoURL || ""} />
                       <AvatarFallback className="font-bold text-xl">{user.displayName?.[0] || "U"}</AvatarFallback>
                     </Avatar>
@@ -155,17 +138,16 @@ export function VideoGrid() {
                 )}
               </div>
             ) : (
-              // Remote Participant Placeholder (In a real app, this would be a WebRTC stream)
               <div className="relative w-full h-full">
                 {p.isVideoOn ? (
                    <img 
                      src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
                      alt={p.name} 
-                     className="w-full h-full object-cover grayscale"
+                     className="w-full h-full object-cover grayscale opacity-50"
                    />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-secondary">
-                     <Avatar className="w-16 h-16 border-2 border-background shadow-lg">
+                  <div className="flex items-center justify-center h-full bg-card">
+                     <Avatar className="w-16 h-16 border-2 border-primary/20 shadow-lg">
                       <AvatarImage src={p.photoURL} />
                       <AvatarFallback className="font-bold text-xl">{p.name?.[0]}</AvatarFallback>
                     </Avatar>
@@ -174,7 +156,7 @@ export function VideoGrid() {
               </div>
             )}
             
-            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="flex flex-col">
                 <span className="text-white text-xs font-bold uppercase tracking-tight">{p.name} {p.id === user?.uid && "(You)"}</span>
                 <span className="text-white/70 text-[10px] uppercase tracking-[0.2em] font-medium">{p.status}</span>
@@ -186,20 +168,14 @@ export function VideoGrid() {
             </div>
           </div>
         ))}
-        
-        {participants && participants.length === 0 && (
-          <div className="col-span-full py-12 text-center border-2 border-dashed bg-muted/10">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Waiting for participants...</p>
-          </div>
-        )}
       </div>
 
-      <div className="flex justify-center items-center gap-8 py-6 bg-background border-2 mt-4">
+      <div className="flex justify-center items-center gap-8 py-6 bg-card border-2 border-primary/10 mt-4 shadow-xl">
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleMic}
-          className="rounded-none h-12 w-12 border-2"
+          className="rounded-none h-12 w-12 border-2 border-primary/20"
         >
           {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
         </Button>
@@ -207,26 +183,22 @@ export function VideoGrid() {
           variant={isVideoOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleVideo}
-          className="rounded-none h-12 w-12 border-2"
+          className="rounded-none h-12 w-12 border-2 border-primary/20"
         >
           {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </Button>
-        <div className="w-px h-8 bg-border" />
+        <div className="w-px h-8 bg-primary/20" />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-none h-12 w-12 border-2">
+            <Button variant="outline" size="icon" className="rounded-none h-12 w-12 border-2 border-primary/20">
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => changeStatus("Deep Work")}>Set Status: Deep Work</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Reading")}>Set Status: Reading</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Coffee Break")}>Set Status: Break</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast({ title: "Room Rules", description: "Minimal distraction environment enabled." })}>
-              <Info className="w-4 h-4 mr-2" />
-              Room Info
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="bg-card border-primary/20">
+            <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-xs uppercase font-bold">Deep Work</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Reading")} className="text-xs uppercase font-bold">Reading</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Coffee Break")} className="text-xs uppercase font-bold">Coffee Break</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

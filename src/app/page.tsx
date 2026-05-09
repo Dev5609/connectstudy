@@ -20,7 +20,6 @@ export default function Home() {
 
   const { data: rooms, loading: roomsLoading } = useCollection(roomsQuery)
 
-  // Fetch recent user sessions for the temporal chart preview
   const userSessionsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(
@@ -33,7 +32,7 @@ export default function Home() {
   const { data: sessions } = useCollection(userSessionsQuery)
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       
       <main className="flex-1 container mx-auto px-6 py-12 space-y-16">
@@ -65,7 +64,7 @@ export default function Home() {
         </section>
 
         <section id="active-rooms" className="space-y-6">
-          <div className="flex items-center justify-between border-b-2 pb-4">
+          <div className="flex items-center justify-between border-b-2 pb-4 border-primary/20">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Active Study Rooms</h2>
           </div>
           
@@ -88,15 +87,15 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 border-2 border-dashed bg-muted/20">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-40 mb-4">No active rooms found</p>
+            <div className="text-center py-16 border-2 border-dashed border-primary/10 bg-muted/20">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-40 mb-4 text-foreground">No active rooms found</p>
               <p className="text-xs text-muted-foreground uppercase tracking-widest">Create a room from the navigation bar to start studying.</p>
             </div>
           )}
         </section>
 
         <section className="space-y-6">
-          <div className="flex items-center justify-between border-b-2 pb-4">
+          <div className="flex items-center justify-between border-b-2 pb-4 border-primary/20">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Temporal Productivity</h2>
             <Link href="/analytics" className="text-xs font-bold uppercase hover:underline">Full Report</Link>
           </div>
@@ -104,7 +103,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t py-12 mt-12 bg-secondary/20">
+      <footer className="border-t border-primary/10 py-12 mt-12 bg-secondary/20">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 font-bold tracking-tighter">
             <BookOpen className="w-5 h-5" />
@@ -128,7 +127,7 @@ export default function Home() {
 function RoomCard({ id, name, participants, type, topic, image }: { id: string, name: string, participants: number, type: 'public' | 'private', topic: string, image: string }) {
   return (
     <Link href={`/rooms/${id}`} className="group">
-      <div className="border-2 hover:bg-secondary/30 transition-smooth overflow-hidden">
+      <div className="border-2 border-primary/10 hover:border-primary/30 hover:bg-secondary/30 transition-smooth overflow-hidden bg-card">
         <div className="aspect-[16/9] relative grayscale group-hover:grayscale-0 transition-all duration-500 overflow-hidden">
           <img 
             src={image} 
@@ -136,7 +135,7 @@ function RoomCard({ id, name, participants, type, topic, image }: { id: string, 
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
           />
           <div className="absolute top-3 left-3 flex gap-2">
-            <span className="bg-white/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold uppercase border">
+            <span className="bg-background/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold uppercase border border-primary/20 text-foreground">
               {topic}
             </span>
           </div>
@@ -152,7 +151,7 @@ function RoomCard({ id, name, participants, type, topic, image }: { id: string, 
               <span className="text-xs font-bold">{participants}</span>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-2 border-t border-dashed">
+          <div className="flex items-center justify-between pt-2 border-t border-dashed border-primary/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Enter Room</span>
             <ArrowRight className="w-4 h-4 -translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all" />
           </div>
