@@ -18,7 +18,19 @@ export default function Home() {
     return query(collection(db, "rooms"), orderBy("createdAt", "desc"), limit(6))
   }, [db])
 
-  const { data: rooms, loading } = useCollection(roomsQuery)
+  const { data: rooms, loading: roomsLoading } = useCollection(roomsQuery)
+
+  // Fetch recent user sessions for the temporal chart preview
+  const userSessionsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "sessions"),
+      orderBy("timestamp", "desc"),
+      limit(14)
+    )
+  }, [db, user])
+
+  const { data: sessions } = useCollection(userSessionsQuery)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -57,13 +69,13 @@ export default function Home() {
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Active Study Rooms</h2>
           </div>
           
-          {loading ? (
+          {roomsLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin opacity-20" />
             </div>
           ) : rooms && rooms.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rooms.map((room) => (
+              {rooms.map((room: any) => (
                 <RoomCard 
                   key={room.id}
                   id={room.id}
@@ -88,7 +100,7 @@ export default function Home() {
             <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Temporal Productivity</h2>
             <Link href="/analytics" className="text-xs font-bold uppercase hover:underline">Full Report</Link>
           </div>
-          <AnalyticsCharts />
+          <AnalyticsCharts sessions={sessions || []} />
         </section>
       </main>
 

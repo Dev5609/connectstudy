@@ -8,20 +8,22 @@ import { firebaseConfig } from './config';
 export function initializeFirebase() {
   let firebaseApp: FirebaseApp;
 
+  // Check if all required config values are present to avoid "invalid-api-key" errors
+  const isConfigValid = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'undefined';
+
   if (getApps().length > 0) {
     firebaseApp = getApp();
   } else {
-    // We ensure that we don't pass undefined values to initializeApp if we can help it,
-    // although the error usually comes from getAuth failing on invalid keys.
-    const config = {
-      apiKey: firebaseConfig.apiKey || "missing-api-key",
-      authDomain: firebaseConfig.authDomain || "",
-      projectId: firebaseConfig.projectId || "missing-project-id",
-      storageBucket: firebaseConfig.storageBucket || "",
-      messagingSenderId: firebaseConfig.messagingSenderId || "",
-      appId: firebaseConfig.appId || "",
-    };
-    firebaseApp = initializeApp(config);
+    // If config is missing or invalid, we still initialize but operations will fail gracefully 
+    // rather than crashing the whole initialization sequence with mock strings.
+    firebaseApp = initializeApp(isConfigValid ? firebaseConfig : {
+      apiKey: "pending",
+      authDomain: "pending",
+      projectId: "pending",
+      storageBucket: "pending",
+      messagingSenderId: "pending",
+      appId: "pending"
+    });
   }
 
   const firestore: Firestore = getFirestore(firebaseApp);
