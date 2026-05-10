@@ -54,7 +54,7 @@ export default function Home() {
 
   const { data: sessions } = useCollection(userSessionsQuery)
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
@@ -73,15 +73,8 @@ export default function Home() {
       image: `https://picsum.photos/seed/${Math.random()}/800/600`
     }
 
+    // Initiate write without await for instant UX
     setDoc(roomRef, roomData)
-      .then(() => {
-        setIsRoomDialogOpen(false)
-        setIsCreating(false)
-        setNewRoomName("")
-        setNewRoomTopic("")
-        toast({ title: "Room Created", description: `Join Code: ${code}` })
-        router.push(`/rooms/${roomId}`)
-      })
       .catch(async (error) => {
         setIsCreating(false)
         const permissionError = new FirestorePermissionError({
@@ -91,6 +84,14 @@ export default function Home() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
+
+    // Close and navigate immediately
+    setIsRoomDialogOpen(false)
+    setIsCreating(false)
+    setNewRoomName("")
+    setNewRoomTopic("")
+    toast({ title: "Room Created", description: `Join Code: ${code}` })
+    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -125,7 +126,7 @@ export default function Home() {
         <section className="grid lg:grid-cols-3 gap-8 md:gap-12 items-center">
           <div className="lg:col-span-1 space-y-8 text-center lg:text-left">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.85] uppercase">
+              <h1 className="text-5xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.85] uppercase text-white">
                 SILENT.<br />FOCUS.
               </h1>
               <p className="text-muted-foreground text-[10px] leading-relaxed max-w-sm mx-auto lg:mx-0 uppercase tracking-[0.4em] font-black opacity-40">
@@ -146,25 +147,25 @@ export default function Home() {
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Room Details</DialogTitle>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">Create Room</DialogTitle>
                     <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Define your study workspace.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-6 py-8">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Room Name</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40 text-white">Room Name</Label>
                       <Input 
                         value={newRoomName} 
                         onChange={(e) => setNewRoomName(e.target.value)} 
-                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
+                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40 text-white" 
                         placeholder="e.g. Design Lab"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Focus Topic</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40 text-white">Focus Topic</Label>
                       <Input 
                         value={newRoomTopic} 
                         onChange={(e) => setNewRoomTopic(e.target.value)} 
-                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
+                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40 text-white" 
                         placeholder="e.g. Mathematics"
                       />
                     </div>
@@ -194,7 +195,7 @@ export default function Home() {
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Enter Join Code</DialogTitle>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">Join Room</DialogTitle>
                     <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Enter the 6-digit room code.</DialogDescription>
                   </DialogHeader>
                   <div className="py-12">
@@ -202,7 +203,7 @@ export default function Home() {
                       value={joinCode} 
                       onChange={(e) => setJoinCode(e.target.value)} 
                       placeholder="000000" 
-                      className="bg-black border-2 border-white/10 text-center text-4xl h-24 font-black tracking-[0.5em] rounded-none focus-visible:border-white/40" 
+                      className="bg-black border-2 border-white/10 text-center text-4xl h-24 font-black tracking-[0.5em] rounded-none focus-visible:border-white/40 text-white" 
                       maxLength={6}
                     />
                   </div>
@@ -227,8 +228,8 @@ export default function Home() {
 
         <section className="space-y-8">
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Total Tracked</h2>
-            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">Full Analytics</Link>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Activity Overview</h2>
+            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">View Details</Link>
           </div>
           <AnalyticsCharts sessions={sessions || []} />
         </section>

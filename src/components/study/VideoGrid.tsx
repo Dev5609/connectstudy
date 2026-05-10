@@ -92,7 +92,6 @@ export function VideoGrid() {
       lastActive: serverTimestamp()
     }, { merge: true })
 
-    // Heartbeat to keep participant list clean
     const heartbeat = setInterval(() => {
       updateDoc(participantRef, { lastActive: serverTimestamp() }).catch(() => {})
     }, 30000)
@@ -138,7 +137,7 @@ export function VideoGrid() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                     <Avatar className="w-20 h-20 border-2 border-white/10 rounded-none">
                       <AvatarImage src={user?.photoURL || ""} />
-                      <AvatarFallback className="font-black text-2xl">{user?.displayName?.[0] || "U"}</AvatarFallback>
+                      <AvatarFallback className="font-black text-2xl text-white">{user?.displayName?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
@@ -160,7 +159,7 @@ export function VideoGrid() {
                   <div className="flex items-center justify-center h-full bg-black/90">
                      <Avatar className="w-20 h-20 border-2 border-white/5 rounded-none">
                       <AvatarImage src={p.photoURL} />
-                      <AvatarFallback className="font-black text-2xl opacity-40">{p.name?.[0]}</AvatarFallback>
+                      <AvatarFallback className="font-black text-2xl opacity-40 text-white">{p.name?.[0]}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
@@ -186,7 +185,7 @@ export function VideoGrid() {
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleMic}
-          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black"
+          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black text-white"
         >
           {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>
@@ -194,7 +193,7 @@ export function VideoGrid() {
           variant={isVideoOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleVideo}
-          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black"
+          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black text-white"
         >
           {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
@@ -202,14 +201,14 @@ export function VideoGrid() {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black">
+            <Button variant="outline" size="icon" className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black text-white">
               <MoreVertical className="w-6 h-6" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-black border-2 border-white/20 rounded-none min-w-[160px]">
-            <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Deep Work</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Analytical Review")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Analytical Review</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Coffee Interval")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Coffee Interval</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Deep Work</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Analytical Review")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Analytical Review</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Coffee Interval")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Coffee Interval</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

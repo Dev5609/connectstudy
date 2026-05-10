@@ -111,14 +111,6 @@ export function Navbar() {
     }
 
     setDoc(roomRef, roomData)
-      .then(() => {
-        setIsRoomDialogOpen(false)
-        setIsCreating(false)
-        setNewRoomName("")
-        setNewRoomTopic("")
-        toast({ title: "Room Created", description: `Join Code: ${code}` })
-        router.push(`/rooms/${roomId}`)
-      })
       .catch(async (error) => {
         setIsCreating(false)
         const permissionError = new FirestorePermissionError({
@@ -128,6 +120,13 @@ export function Navbar() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
+
+    setIsRoomDialogOpen(false)
+    setIsCreating(false)
+    setNewRoomName("")
+    setNewRoomTopic("")
+    toast({ title: "Room Created", description: `Join Code: ${code}` })
+    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -181,7 +180,7 @@ export function Navbar() {
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/20 rounded-none">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Enter Code</DialogTitle>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-white">Join Room</DialogTitle>
                     <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Enter the 6-digit room code.</DialogDescription>
                   </DialogHeader>
                   <div className="py-8">
@@ -189,7 +188,7 @@ export function Navbar() {
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
                       placeholder="000000"
-                      className="border-2 border-white/10 bg-black text-center text-2xl h-16 font-black tracking-[0.5em] rounded-none"
+                      className="border-2 border-white/10 bg-black text-center text-2xl h-16 font-black tracking-[0.5em] rounded-none text-white"
                       maxLength={6}
                     />
                   </div>
@@ -214,26 +213,26 @@ export function Navbar() {
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/20 rounded-none">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Create Room</DialogTitle>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-white">Create Room</DialogTitle>
                     <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Set up your workspace.</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Name</Label>
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Name</Label>
                       <Input
                         value={newRoomName}
                         onChange={(e) => setNewRoomName(e.target.value)}
                         placeholder="e.g. Deep Focus"
-                        className="border-2 border-white/10 bg-black rounded-none"
+                        className="border-2 border-white/10 bg-black rounded-none text-white"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Topic</Label>
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Topic</Label>
                       <Input
                         value={newRoomTopic}
                         onChange={(e) => setNewRoomTopic(e.target.value)}
                         placeholder="e.g. Physics"
-                        className="border-2 border-white/10 bg-black rounded-none"
+                        className="border-2 border-white/10 bg-black rounded-none text-white"
                       />
                     </div>
                   </div>
@@ -269,7 +268,7 @@ export function Navbar() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[400px] bg-black border-2 border-white/20 rounded-none">
                 <DialogHeader>
-                  <DialogTitle className="font-black uppercase tracking-tighter text-2xl">ConnectStudy</DialogTitle>
+                  <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">ConnectStudy</DialogTitle>
                 </DialogHeader>
                 <Tabs defaultValue="login" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-4 bg-white/5 border border-white/10 rounded-none">
@@ -279,12 +278,12 @@ export function Navbar() {
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Email</Label>
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none text-white" required />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Password</Label>
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none text-white" required />
                       </div>
                       <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 rounded-none h-12">
                         {isAuthLoading ? "Loading..." : "Login"}
@@ -294,16 +293,16 @@ export function Navbar() {
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Name</Label>
-                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Name</Label>
+                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2 border-white/10 rounded-none text-white" required />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Email</Label>
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none text-white" required />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-white">Password</Label>
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none text-white" required />
                       </div>
                       <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 rounded-none h-12">
                         {isAuthLoading ? "Loading..." : "Register"}
