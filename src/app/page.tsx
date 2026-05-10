@@ -73,10 +73,8 @@ export default function Home() {
       image: `https://picsum.photos/seed/${Math.random()}/800/600`
     }
 
-    // Initiate write without await for instant UX
     setDoc(roomRef, roomData)
       .catch(async (error) => {
-        setIsCreating(false)
         const permissionError = new FirestorePermissionError({
           path: roomRef.path,
           operation: 'create',
@@ -85,7 +83,6 @@ export default function Home() {
         errorEmitter.emit('permission-error', permissionError);
       });
 
-    // Close and navigate immediately
     setIsRoomDialogOpen(false)
     setIsCreating(false)
     setNewRoomName("")
@@ -104,16 +101,15 @@ export default function Home() {
       
       if (querySnapshot.empty) {
         toast({ variant: "destructive", title: "Invalid Code", description: "No room found with this code." })
-        setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
-        setIsJoinDialogOpen(false)
-        setIsJoining(false)
         setJoinCode("")
+        setIsJoinDialogOpen(false)
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
+      toast({ variant: "destructive", title: "Error", description: "Could not join room. Please try again." })
+    } finally {
       setIsJoining(false)
     }
   }
@@ -127,10 +123,10 @@ export default function Home() {
           <div className="lg:col-span-1 space-y-8 text-center lg:text-left">
             <div className="space-y-4">
               <h1 className="text-5xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.85] uppercase text-white">
-                SILENT.<br />FOCUS.
+                DEEP.<br />WORK.
               </h1>
               <p className="text-muted-foreground text-[10px] leading-relaxed max-w-sm mx-auto lg:mx-0 uppercase tracking-[0.4em] font-black opacity-40">
-                Architectural productivity collective.
+                A focused environment for your growth.
               </p>
             </div>
             
@@ -148,7 +144,7 @@ export default function Home() {
                 <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">Create Room</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Define your study workspace.</DialogDescription>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Name your study space.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-6 py-8">
                     <div className="grid gap-2">
@@ -157,16 +153,16 @@ export default function Home() {
                         value={newRoomName} 
                         onChange={(e) => setNewRoomName(e.target.value)} 
                         className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40 text-white" 
-                        placeholder="e.g. Design Lab"
+                        placeholder="e.g. Science Lab"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40 text-white">Focus Topic</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40 text-white">Topic</Label>
                       <Input 
                         value={newRoomTopic} 
                         onChange={(e) => setNewRoomTopic(e.target.value)} 
                         className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40 text-white" 
-                        placeholder="e.g. Mathematics"
+                        placeholder="e.g. Physics"
                       />
                     </div>
                   </div>
@@ -228,8 +224,8 @@ export default function Home() {
 
         <section className="space-y-8">
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Activity Overview</h2>
-            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">View Details</Link>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Weekly activity</h2>
+            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">History</Link>
           </div>
           <AnalyticsCharts sessions={sessions || []} />
         </section>

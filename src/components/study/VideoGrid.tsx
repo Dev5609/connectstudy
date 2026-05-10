@@ -35,7 +35,6 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
-  // Media Initialization
   useEffect(() => {
     let stream: MediaStream | null = null
 
@@ -47,11 +46,10 @@ export function VideoGrid() {
         })
         setLocalStream(stream)
       } catch (err) {
-        console.error("Media Access Error:", err)
         toast({
           variant: "destructive",
           title: "Hardware Blocked",
-          description: "Ensure your camera and microphone are allowed.",
+          description: "Camera and microphone access denied.",
         })
       }
     }
@@ -65,7 +63,6 @@ export function VideoGrid() {
     }
   }, [toast])
 
-  // Update Local Video Ref when stream or video toggle changes
   useEffect(() => {
     if (videoRef.current && localStream) {
       videoRef.current.srcObject = isVideoOn ? localStream : null
@@ -76,19 +73,18 @@ export function VideoGrid() {
     }
   }, [localStream, isVideoOn, isMicOn])
 
-  // Broadcast presence and state to room
   useEffect(() => {
     if (!db || !user || !roomId) return
 
     const participantRef = doc(db, "rooms", roomId, "participants", user.uid)
     
     setDoc(participantRef, {
-      name: user.displayName || "Anonymous",
+      name: user.displayName || "User",
       photoURL: user.photoURL || "",
       joinedAt: serverTimestamp(),
       isMicOn: isMicOn,
       isVideoOn: isVideoOn,
-      status: isVideoOn ? "Deep Focus" : "Private Mode",
+      status: isVideoOn ? "Active Focus" : "Private",
       lastActive: serverTimestamp()
     }, { merge: true })
 
@@ -131,10 +127,10 @@ export function VideoGrid() {
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover ${!isVideoOn ? 'hidden' : ''}`}
+                  className={`w-full h-full object-cover filter-none ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black">
                     <Avatar className="w-20 h-20 border-2 border-white/10 rounded-none">
                       <AvatarImage src={user?.photoURL || ""} />
                       <AvatarFallback className="font-black text-2xl text-white">{user?.displayName?.[0] || "U"}</AvatarFallback>
@@ -149,38 +145,38 @@ export function VideoGrid() {
                      <img 
                        src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
                        alt={p.name} 
-                       className="w-full h-full object-cover opacity-60"
+                       className="w-full h-full object-cover opacity-100 filter-none"
                      />
-                     <div className="absolute inset-0 flex items-center justify-center">
-                       <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50">Streaming</span>
+                     <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                       <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">Live Focus</span>
                      </div>
                    </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-black/90">
-                     <Avatar className="w-20 h-20 border-2 border-white/5 rounded-none">
+                  <div className="flex items-center justify-center h-full bg-black">
+                     <Avatar className="w-20 h-20 border-2 border-white/10 rounded-none">
                       <AvatarImage src={p.photoURL} />
-                      <AvatarFallback className="font-black text-2xl opacity-40 text-white">{p.name?.[0]}</AvatarFallback>
+                      <AvatarFallback className="font-black text-2xl text-white">{p.name?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
               </div>
             )}
             
-            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black to-transparent flex items-center justify-between opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black to-transparent flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-white text-[10px] font-black uppercase tracking-tight">{p.name} {p.id === user?.uid && "(You)"}</span>
-                <span className="text-white/40 text-[8px] uppercase tracking-[0.3em] font-bold">{p.status}</span>
+                <span className="text-white/60 text-[8px] uppercase tracking-[0.3em] font-bold">{p.status}</span>
               </div>
               <div className="flex gap-2">
                 {!p.isMicOn && <MicOff className="w-3.5 h-3.5 text-red-500" />}
-                {p.isMicOn && <Mic className="w-3.5 h-3.5 text-white/60" />}
+                {p.isMicOn && <Mic className="w-3.5 h-3.5 text-white" />}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-center items-center gap-6 py-8 bg-black border-2 border-white/10 shadow-2xl">
+      <div className="flex justify-center items-center gap-6 py-8 bg-black border-2 border-white/10">
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
@@ -197,7 +193,6 @@ export function VideoGrid() {
         >
           {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
-        <div className="w-[1px] h-10 bg-white/10" />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -207,8 +202,8 @@ export function VideoGrid() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-black border-2 border-white/20 rounded-none min-w-[160px]">
             <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Deep Work</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Analytical Review")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Analytical Review</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Coffee Interval")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Coffee Interval</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Focus")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Focus</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Break")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black text-white">Break</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

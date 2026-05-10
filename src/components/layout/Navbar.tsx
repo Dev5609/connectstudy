@@ -61,7 +61,7 @@ export function Navbar() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       setIsAuthDialogOpen(false)
-      toast({ title: "Welcome Back", description: "Session started." })
+      toast({ title: "Welcome", description: "Logged in." })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Login Error", description: error.message })
     } finally {
@@ -77,7 +77,7 @@ export function Navbar() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(userCredential.user, { displayName: name })
       setIsAuthDialogOpen(false)
-      toast({ title: "Account Created", description: "You are ready to focus." })
+      toast({ title: "Welcome", description: "Account ready." })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message })
     } finally {
@@ -112,7 +112,6 @@ export function Navbar() {
 
     setDoc(roomRef, roomData)
       .catch(async (error) => {
-        setIsCreating(false)
         const permissionError = new FirestorePermissionError({
           path: roomRef.path,
           operation: 'create',
@@ -138,17 +137,16 @@ export function Navbar() {
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Code", description: "No room found." })
-        setIsJoining(false)
+        toast({ variant: "destructive", title: "Invalid Code", description: "Room not found." })
       } else {
         const roomDoc = querySnapshot.docs[0]
-        setIsJoinDialogOpen(false)
-        setIsJoining(false)
         setJoinCode("")
+        setIsJoinDialogOpen(false)
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
+      toast({ variant: "destructive", title: "Error", description: "Join failed. Try again." })
+    } finally {
       setIsJoining(false)
     }
   }
@@ -164,7 +162,7 @@ export function Navbar() {
           
           <div className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Home</Link>
-            <Link href="/analytics" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Stats</Link>
+            <Link href="/analytics" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">History</Link>
           </div>
         </div>
 
@@ -181,7 +179,7 @@ export function Navbar() {
                 <DialogContent className="bg-black border-2 border-white/20 rounded-none">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter text-white">Join Room</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Enter the 6-digit room code.</DialogDescription>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Enter the 6-digit code.</DialogDescription>
                   </DialogHeader>
                   <div className="py-8">
                     <Input
@@ -222,7 +220,7 @@ export function Navbar() {
                       <Input
                         value={newRoomName}
                         onChange={(e) => setNewRoomName(e.target.value)}
-                        placeholder="e.g. Deep Focus"
+                        placeholder="e.g. Science Hub"
                         className="border-2 border-white/10 bg-black rounded-none text-white"
                       />
                     </div>
