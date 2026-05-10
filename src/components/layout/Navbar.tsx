@@ -107,7 +107,7 @@ export function Navbar() {
       createdAt: serverTimestamp(),
       ownerId: user.uid,
       joinCode: code,
-      image: `https://picsum.photos/seed/${Math.random()}/800/600`
+      image: `https://picsum.photos/seed/${roomId}/800/600`
     }
 
     setDoc(roomRef, roomData)
@@ -129,15 +129,24 @@ export function Navbar() {
   }
 
   const handleJoinRoom = async () => {
-    if (!db || !joinCode) return
+    const cleanedCode = joinCode.trim()
+    if (!db || !cleanedCode) return
     setIsJoining(true)
 
     try {
-      const q = query(collection(db, "rooms"), where("joinCode", "==", joinCode.trim()), limit(1))
+      const q = query(
+        collection(db, "rooms"), 
+        where("joinCode", "==", cleanedCode), 
+        limit(1)
+      )
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Code", description: "Room not found." })
+        toast({ 
+          variant: "destructive", 
+          title: "Not Found", 
+          description: "Check the 6-digit code." 
+        })
       } else {
         const roomDoc = querySnapshot.docs[0]
         setJoinCode("")
@@ -145,7 +154,11 @@ export function Navbar() {
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: "Join failed. Try again." })
+      toast({ 
+        variant: "destructive", 
+        title: "Error", 
+        description: "Join failed. Ensure you are signed in." 
+      })
     } finally {
       setIsJoining(false)
     }

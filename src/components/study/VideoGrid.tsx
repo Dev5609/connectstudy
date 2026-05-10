@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -35,33 +35,30 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
-  useEffect(() => {
-    let stream: MediaStream | null = null
-
-    async function setupMedia() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        })
-        setLocalStream(stream)
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Hardware Blocked",
-          description: "Camera and microphone access denied.",
-        })
-      }
-    }
-
-    setupMedia()
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
-      }
+  const setupMedia = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      })
+      setLocalStream(stream)
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Hardware Blocked",
+        description: "Camera and microphone access denied.",
+      })
     }
   }, [toast])
+
+  useEffect(() => {
+    setupMedia()
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop())
+      }
+    }
+  }, [setupMedia])
 
   useEffect(() => {
     if (videoRef.current && localStream) {
@@ -121,13 +118,13 @@ export function VideoGrid() {
         {participants?.map((p: any) => (
           <div key={p.id} className="relative aspect-video bg-black group border-2 border-white/10 transition-all hover:border-white/30">
             {p.id === user?.uid ? (
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full bg-black">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover filter-none ${!isVideoOn ? 'hidden' : ''}`}
+                  className={`w-full h-full object-cover saturate-100 grayscale-0 ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black">
@@ -145,7 +142,7 @@ export function VideoGrid() {
                      <img 
                        src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
                        alt={p.name} 
-                       className="w-full h-full object-cover opacity-100 filter-none"
+                       className="w-full h-full object-cover opacity-100 saturate-100 grayscale-0"
                      />
                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">Live Focus</span>

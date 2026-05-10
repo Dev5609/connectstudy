@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { BookOpen, Plus, LogIn } from "lucide-react"
 import Link from "next/link"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
-import { collection, query, limit, orderBy, doc, setDoc } from "firebase/firestore"
+import { collection, query, limit, orderBy, doc, setDoc, getDocs, where, serverTimestamp } from "firebase/firestore"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,6 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { serverTimestamp, getDocs, where } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 
@@ -70,7 +69,7 @@ export default function Home() {
       createdAt: serverTimestamp(),
       ownerId: user.uid,
       joinCode: code,
-      image: `https://picsum.photos/seed/${Math.random()}/800/600`
+      image: `https://picsum.photos/seed/${roomId}/800/600`
     }
 
     setDoc(roomRef, roomData)
@@ -92,15 +91,24 @@ export default function Home() {
   }
 
   const handleJoinRoom = async () => {
-    if (!db || !joinCode) return
+    const cleanedCode = joinCode.trim()
+    if (!db || !cleanedCode) return
     setIsJoining(true)
 
     try {
-      const q = query(collection(db, "rooms"), where("joinCode", "==", joinCode.trim()), limit(1))
+      const q = query(
+        collection(db, "rooms"), 
+        where("joinCode", "==", cleanedCode), 
+        limit(1)
+      )
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Code", description: "No room found with this code." })
+        toast({ 
+          variant: "destructive", 
+          title: "Code Not Found", 
+          description: "Please check the 6-digit code and try again." 
+        })
       } else {
         const roomDoc = querySnapshot.docs[0]
         setJoinCode("")
@@ -108,7 +116,11 @@ export default function Home() {
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: "Could not join room. Please try again." })
+      toast({ 
+        variant: "destructive", 
+        title: "Access Denied", 
+        description: "Could not find room. Ensure you are signed in." 
+      })
     } finally {
       setIsJoining(false)
     }
