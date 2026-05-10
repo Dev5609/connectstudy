@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { BookOpen, Plus, LogIn, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
-import { collection, query, limit, orderBy } from "firebase/firestore"
+import { collection, query, limit, orderBy, doc, setDoc } from "firebase/firestore"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,9 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { addDoc, serverTimestamp, getDocs, where } from "firebase/firestore"
+import { serverTimestamp, getDocs, where } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function Home() {
   const db = useFirestore()
@@ -54,11 +56,14 @@ export default function Home() {
 
   const { data: sessions } = useCollection(userSessionsQuery)
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
     const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const roomRef = doc(collection(db, "rooms"))
+    const roomId = roomRef.id
+    
     const roomData = {
       name: newRoomName,
       topic: newRoomTopic,
@@ -70,16 +75,23 @@ export default function Home() {
       image: `https://picsum.photos/seed/${Math.random()}/800/600`
     }
 
-    try {
-      const docRef = await addDoc(collection(db, "rooms"), roomData)
-      setIsRoomDialogOpen(false)
-      toast({ title: "Room Created", description: `Redirecting to workspace...` })
-      router.push(`/rooms/${docRef.id}`)
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
-    } finally {
-      setIsCreating(false)
-    }
+    setDoc(roomRef, roomData)
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: roomRef.path,
+          operation: 'create',
+          requestResourceData: roomData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
+    // Optimistic navigation
+    setIsRoomDialogOpen(false)
+    setIsCreating(false)
+    setNewRoomName("")
+    setNewRoomTopic("")
+    toast({ title: "Workspace Launching", description: `Room code: ${code}. Redirecting...` })
+    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -91,15 +103,17 @@ export default function Home() {
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Code", description: "No room found." })
+        toast({ variant: "destructive", title: "Invalid Code", description: "No room found with this code." })
+        setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
         setIsJoinDialogOpen(false)
+        setIsJoining(false)
+        setJoinCode("")
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message })
-    } finally {
       setIsJoining(false)
     }
   }
@@ -134,20 +148,35 @@ export default function Home() {
                 <DialogContent className="bg-black border-2 border-white/20">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter">Launch Workspace</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Define your focus objective.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Identity</Label>
-                      <Input value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} className="bg-black border-2" />
+                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Room Name</Label>
+                      <Input 
+                        value={newRoomName} 
+                        onChange={(e) => setNewRoomName(e.target.value)} 
+                        className="bg-black border-2 border-white/10" 
+                        placeholder="e.g. Architectural Design"
+                      />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Topic</Label>
-                      <Input value={newRoomTopic} onChange={(e) => setNewRoomTopic(e.target.value)} className="bg-black border-2" />
+                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Core Topic</Label>
+                      <Input 
+                        value={newRoomTopic} 
+                        onChange={(e) => setNewRoomTopic(e.target.value)} 
+                        className="bg-black border-2 border-white/10" 
+                        placeholder="e.g. Physics Revision"
+                      />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleCreateRoom} className="w-full bg-white text-black font-black uppercase tracking-widest">
-                      Activate
+                    <Button 
+                      onClick={handleCreateRoom} 
+                      disabled={isCreating || !newRoomName || !newRoomTopic}
+                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-black uppercase tracking-widest"
+                    >
+                      {isCreating ? "Initializing..." : "Activate"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -167,19 +196,24 @@ export default function Home() {
                 <DialogContent className="bg-black border-2 border-white/20">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter">Enter Code</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Join an existing study group.</DialogDescription>
                   </DialogHeader>
-                  <div className="py-4">
+                  <div className="py-8">
                     <Input 
                       value={joinCode} 
                       onChange={(e) => setJoinCode(e.target.value)} 
                       placeholder="6-DIGIT CODE" 
-                      className="bg-black border-2 text-center text-3xl font-black tracking-[0.5em]" 
+                      className="bg-black border-2 border-white/10 text-center text-3xl h-20 font-black tracking-[0.5em]" 
                       maxLength={6}
                     />
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleJoinRoom} className="w-full bg-white text-black font-black uppercase tracking-widest">
-                      Connect
+                    <Button 
+                      onClick={handleJoinRoom} 
+                      disabled={isJoining || joinCode.length < 6}
+                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-black uppercase tracking-widest"
+                    >
+                      {isJoining ? "Connecting..." : "Connect"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

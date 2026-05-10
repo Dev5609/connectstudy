@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
   }, [sessions])
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <Navbar />
       
       <main className="flex-1 container mx-auto px-6 py-12 space-y-12 max-w-6xl">
@@ -43,12 +43,12 @@ export default function AnalyticsPage() {
         </header>
 
         {!user ? (
-          <div className="text-center py-24 border-2 border-dashed">
+          <div className="text-center py-24 border-2 border-dashed border-white/10">
             <h2 className="text-sm font-bold uppercase tracking-[0.3em] opacity-40">Please login to view analytics</h2>
           </div>
         ) : loading ? (
           <div className="flex justify-center py-24">
-            <Loader2 className="w-12 h-12 animate-spin opacity-20" />
+            <Loader2 className="w-12 h-12 animate-spin opacity-20 text-white" />
           </div>
         ) : (
           <>
@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
             </section>
 
             <section className="space-y-6">
-              <div className="flex items-center justify-between border-b-2 pb-4">
+              <div className="flex items-center justify-between border-b-2 pb-4 border-white/10">
                 <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Temporal Activity</h2>
               </div>
               <AnalyticsCharts sessions={sessions || []} />
@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
 
             <section className="grid lg:grid-cols-1 gap-12">
               <div className="space-y-6">
-                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] border-b pb-4">Study Session Log</h3>
+                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] border-b border-white/10 pb-4">Study Session Log</h3>
                  <div className="space-y-4">
                     {sessions && sessions.length > 0 ? (
                       sessions.map((session) => (
@@ -95,14 +95,14 @@ export default function AnalyticsPage() {
 
 function StatCard({ icon, label, value, detail }: { icon: React.ReactNode, label: string, value: string, detail: string }) {
   return (
-    <Card className="border-2 shadow-none">
+    <Card className="border-2 border-white/10 shadow-none bg-black">
       <CardContent className="p-6 space-y-4">
-        <div className="p-2 bg-secondary w-fit rounded-sm">{icon}</div>
+        <div className="p-2 bg-white/5 w-fit rounded-none border border-white/10">{icon}</div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-          <p className="text-3xl font-black tracking-tighter">{value}</p>
+          <p className="text-3xl font-black tracking-tighter text-white">{value}</p>
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-tight text-accent/60">{detail}</p>
+        <p className="text-[10px] font-bold uppercase tracking-tight text-white/40">{detail}</p>
       </CardContent>
     </Card>
   )
@@ -110,12 +110,12 @@ function StatCard({ icon, label, value, detail }: { icon: React.ReactNode, label
 
 function SessionLog({ title, date, duration, type }: { title: string, date: string, duration: string, type: string }) {
   return (
-    <div className="flex items-center justify-between py-2 group cursor-default">
+    <div className="flex items-center justify-between py-2 group cursor-default border-b border-white/5 last:border-0">
       <div className="flex flex-col">
-        <span className="text-xs font-bold uppercase tracking-tight group-hover:underline">{title}</span>
+        <span className="text-xs font-bold uppercase tracking-tight group-hover:text-white transition-colors">{title}</span>
         <span className="text-[10px] text-muted-foreground uppercase">{date} • {type}</span>
       </div>
-      <span className="text-xs font-black bg-secondary px-2 py-1">{duration}</span>
+      <span className="text-xs font-black bg-white/5 border border-white/10 px-2 py-1">{duration}</span>
     </div>
   )
 }

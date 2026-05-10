@@ -25,9 +25,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
-import { collection, addDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore"
+import { collection, doc, setDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export function Navbar() {
   const { user } = useUser()
@@ -92,15 +94,14 @@ export function Navbar() {
     router.push("/")
   }
 
-  const generateJoinCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString()
-  }
-
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
-    const code = generateJoinCode()
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const roomRef = doc(collection(db, "rooms"))
+    const roomId = roomRef.id
+    
     const roomData = {
       name: newRoomName,
       topic: newRoomTopic,
@@ -112,25 +113,25 @@ export function Navbar() {
       image: `https://picsum.photos/seed/${Math.random()}/800/600`
     }
 
-    try {
-      const docRef = await addDoc(collection(db, "rooms"), roomData)
-      setIsRoomDialogOpen(false)
-      setNewRoomName("")
-      setNewRoomTopic("")
-      toast({
-        title: "Room Created",
-        description: `Room code: ${code}. Redirecting...`,
-      })
-      router.push(`/rooms/${docRef.id}`)
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Creation Failed",
-        description: error.message || "Could not create the room.",
-      })
-    } finally {
-      setIsCreating(false)
-    }
+    setDoc(roomRef, roomData)
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: roomRef.path,
+          operation: 'create',
+          requestResourceData: roomData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
+    setIsRoomDialogOpen(false)
+    setIsCreating(false)
+    setNewRoomName("")
+    setNewRoomTopic("")
+    toast({
+      title: "Room Created",
+      description: `Room code: ${code}. Redirecting...`,
+    })
+    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -147,15 +148,13 @@ export function Navbar() {
           title: "Invalid Code",
           description: "No room found with this join code.",
         })
+        setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
         setIsJoinDialogOpen(false)
+        setIsJoining(false)
         setJoinCode("")
         router.push(`/rooms/${roomDoc.id}`)
-        toast({
-          title: "Room Found",
-          description: "Joining your study group...",
-        })
       }
     } catch (error: any) {
       toast({
@@ -163,7 +162,6 @@ export function Navbar() {
         title: "Error Joining",
         description: error.message || "Could not join room.",
       })
-    } finally {
       setIsJoining(false)
     }
   }
@@ -200,12 +198,12 @@ export function Navbar() {
                       Enter the 6-digit code shared by the room owner.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="py-4">
+                  <div className="py-8">
                     <Input
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
                       placeholder="e.g. 123456"
-                      className="border-2 bg-black text-center text-2xl font-black tracking-[0.5em]"
+                      className="border-2 border-white/10 bg-black text-center text-2xl h-16 font-black tracking-[0.5em]"
                       maxLength={6}
                     />
                   </div>
@@ -213,7 +211,7 @@ export function Navbar() {
                     <Button 
                       onClick={handleJoinRoom} 
                       disabled={isJoining || joinCode.length < 6}
-                      className="w-full uppercase font-bold tracking-widest bg-white text-black hover:bg-white/90"
+                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-bold uppercase tracking-widest"
                     >
                       {isJoining ? "Connecting..." : "Join Workspace"}
                     </Button>
@@ -242,7 +240,7 @@ export function Navbar() {
                         value={newRoomName}
                         onChange={(e) => setNewRoomName(e.target.value)}
                         placeholder="e.g. Deep Focus Architecture"
-                        className="border-2 bg-black"
+                        className="border-2 border-white/10 bg-black"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -251,7 +249,7 @@ export function Navbar() {
                         value={newRoomTopic}
                         onChange={(e) => setNewRoomTopic(e.target.value)}
                         placeholder="e.g. UI Design"
-                        className="border-2 bg-black"
+                        className="border-2 border-white/10 bg-black"
                       />
                     </div>
                   </div>
@@ -259,7 +257,7 @@ export function Navbar() {
                     <Button 
                       onClick={handleCreateRoom} 
                       disabled={isCreating || !newRoomName || !newRoomTopic}
-                      className="w-full uppercase font-bold tracking-widest bg-white text-black hover:bg-white/90"
+                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-bold uppercase tracking-widest"
                     >
                       {isCreating ? "Initializing..." : "Activate Workspace"}
                     </Button>
@@ -301,13 +299,13 @@ export function Navbar() {
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2" required />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2" required />
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10" required />
                       </div>
-                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90">
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black">
                         {isAuthLoading ? "Authenticating..." : "Enter Workspace"}
                       </Button>
                     </form>
@@ -316,17 +314,17 @@ export function Navbar() {
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
-                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2" required />
+                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2 border-white/10" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2" required />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2" required />
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10" required />
                       </div>
-                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90">
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black">
                         {isAuthLoading ? "Initialising..." : "Create Profile"}
                       </Button>
                     </form>
