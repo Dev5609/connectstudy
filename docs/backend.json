@@ -12,9 +12,10 @@
         "image": { "type": "string" },
         "participantCount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" },
-        "ownerId": { "type": "string" }
+        "ownerId": { "type": "string" },
+        "joinCode": { "type": "string", "description": "6-digit unique code to join the room" }
       },
-      "required": ["name", "topic", "type", "ownerId"]
+      "required": ["name", "topic", "type", "ownerId", "joinCode"]
     },
     "Message": {
       "title": "Message",
