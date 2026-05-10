@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Send, Image as ImageIcon, FileText, Smile, Loader2, Download, Paperclip } from "lucide-react"
+import { Send, Smile, Loader2, Download, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -58,11 +58,11 @@ export function ChatPanel({ roomId }: { roomId: string }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > 1048576) { // 1MB limit for base64 prototype
+    if (file.size > 1048576) {
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "Please upload files smaller than 1MB for this prototype.",
+        description: "Max 1MB allowed.",
       })
       return
     }
@@ -77,10 +77,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
         data: base64
       })
       setIsUploading(false)
-      toast({
-        title: "File Uploaded",
-        description: `${file.name} is ready for the group.`,
-      })
+      toast({ title: "File Shared", description: file.name })
     }
     reader.readAsDataURL(file)
   }
@@ -92,8 +89,8 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   return (
     <div className="flex flex-col h-full border-l border-white/10 bg-black w-80 lg:w-96">
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
-        <h3 className="font-black text-[10px] uppercase tracking-[0.4em]">Collective Chat</h3>
-        <span className="text-[8px] bg-white text-black px-2 py-0.5 font-bold uppercase tracking-widest">Live Sync</span>
+        <h3 className="font-black text-[10px] uppercase tracking-[0.4em]">Room Chat</h3>
+        <span className="text-[8px] bg-white text-black px-2 py-0.5 font-bold uppercase tracking-widest">Live</span>
       </div>
       
       <ScrollArea className="flex-1 p-4">
@@ -139,7 +136,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
             ))}
             {messages && messages.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-20">Transmission Log Empty</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-20">No messages yet</p>
               </div>
             )}
           </div>
@@ -149,7 +146,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
       <div className="p-4 border-t border-white/10 space-y-3 bg-black">
         {!user ? (
           <div className="text-center p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Authentication required</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Please Login</p>
           </div>
         ) : (
           <>
@@ -176,7 +173,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                     <Smile className="w-4 h-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="top" className="w-full p-2 flex gap-2 bg-black border border-white/20">
+                <PopoverContent side="top" className="w-full p-2 flex gap-2 bg-black border border-white/20 rounded-none">
                   {['🔥', '👏', '💯', '👋', '✅'].map(emoji => (
                     <Button key={emoji} variant="ghost" size="sm" className="hover:bg-white/10" onClick={() => sendEmoji(emoji)}>
                       {emoji}
@@ -187,7 +184,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
             </div>
             <div className="flex gap-2">
               <Input 
-                placeholder="Message study room..." 
+                placeholder="Message..." 
                 className="flex-1 text-xs bg-black border-2 border-white/10 rounded-none h-10 focus-visible:border-white/40 transition-all" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}

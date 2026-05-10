@@ -7,7 +7,7 @@ import { FocusTimer } from "@/components/study/FocusTimer"
 import { VideoGrid } from "@/components/study/VideoGrid"
 import { ChatPanel } from "@/components/study/ChatPanel"
 import { Button } from "@/components/ui/button"
-import { Share2, LogOut, Info, Loader2, Copy } from "lucide-react"
+import { LogOut, Info, Loader2, Copy } from "lucide-react"
 import { useDoc, useFirestore } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { useMemo } from "react"
@@ -31,8 +31,8 @@ export default function StudyRoomPage() {
     if (room?.joinCode) {
       navigator.clipboard.writeText(room.joinCode)
       toast({
-        title: "Code Copied",
-        description: "Share this code with your study partners.",
+        title: "Copied",
+        description: "Room code copied to clipboard.",
       })
     }
   }
@@ -55,8 +55,8 @@ export default function StudyRoomPage() {
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-6">
-            <h1 className="text-4xl font-black uppercase tracking-tighter">Room Not Found</h1>
-            <Button onClick={() => router.push("/")} className="bg-white text-black font-bold uppercase tracking-widest rounded-none px-8">Return Home</Button>
+            <h1 className="text-4xl font-black uppercase tracking-tighter">Not Found</h1>
+            <Button onClick={() => router.push("/")} className="bg-white text-black font-bold uppercase tracking-widest rounded-none px-8">Home</Button>
           </div>
         </div>
       </div>
@@ -82,12 +82,12 @@ export default function StudyRoomPage() {
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-bold opacity-60">
-                Active Session • {room.topic}
+                {room.topic}
               </p>
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="destructive" size="sm" className="gap-2 rounded-none uppercase font-bold tracking-widest" onClick={handleLeave}>
+              <Button variant="destructive" size="sm" className="gap-2 rounded-none uppercase font-bold tracking-widest h-10 px-6" onClick={handleLeave}>
                 <LogOut className="w-4 h-4" />
                 Leave
               </Button>
@@ -102,7 +102,7 @@ export default function StudyRoomPage() {
               
               <div className="bg-black border-2 border-white/10 p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Vital Stats</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Stats</h4>
                   <Info className="w-3.5 h-3.5 opacity-20" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

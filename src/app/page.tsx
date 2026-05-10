@@ -36,12 +36,10 @@ export default function Home() {
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
   
-  // Create Room State
   const [newRoomName, setNewRoomName] = useState("")
   const [newRoomTopic, setNewRoomTopic] = useState("")
   const [isCreating, setIsCreating] = useState(false)
 
-  // Join Room State
   const [joinCode, setJoinCode] = useState("")
   const [isJoining, setIsJoining] = useState(false)
 
@@ -81,7 +79,7 @@ export default function Home() {
         setIsCreating(false)
         setNewRoomName("")
         setNewRoomTopic("")
-        toast({ title: "Workspace Activated", description: `Join Code: ${code}.` })
+        toast({ title: "Room Created", description: `Join Code: ${code}` })
         router.push(`/rooms/${roomId}`)
       })
       .catch(async (error) => {
@@ -104,7 +102,7 @@ export default function Home() {
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Protocol", description: "No workspace matches this code." })
+        toast({ variant: "destructive", title: "Invalid Code", description: "No room found with this code." })
         setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
@@ -114,7 +112,7 @@ export default function Home() {
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Sync Error", description: error.message })
+      toast({ variant: "destructive", title: "Error", description: error.message })
       setIsJoining(false)
     }
   }
@@ -142,32 +140,32 @@ export default function Home() {
                     size="lg" 
                     className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest h-16"
                   >
-                    Establish Room
+                    Create Room
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Initialize Workspace</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Set the collective focus objective.</DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Room Details</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Define your study workspace.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-6 py-8">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Workspace Identity</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Room Name</Label>
                       <Input 
                         value={newRoomName} 
                         onChange={(e) => setNewRoomName(e.target.value)} 
                         className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
-                        placeholder="e.g. CORE DESIGN UNIT"
+                        placeholder="e.g. Design Lab"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Operational Topic</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Focus Topic</Label>
                       <Input 
                         value={newRoomTopic} 
                         onChange={(e) => setNewRoomTopic(e.target.value)} 
                         className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
-                        placeholder="e.g. MATHEMATICAL PHYSICS"
+                        placeholder="e.g. Mathematics"
                       />
                     </div>
                   </div>
@@ -177,7 +175,7 @@ export default function Home() {
                       disabled={isCreating || !newRoomName || !newRoomTopic}
                       className="w-full bg-white text-black hover:bg-white/90 font-black uppercase tracking-widest h-14 rounded-none"
                     >
-                      {isCreating ? "Booting..." : "Activate"}
+                      {isCreating ? "Creating..." : "Create"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -190,14 +188,14 @@ export default function Home() {
                     variant="outline"
                     className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest h-16"
                   >
-                    Sync Interface
+                    Join Room
                     <LogIn className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Access Protocol</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Enter the 6-digit sync code.</DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Enter Join Code</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Enter the 6-digit room code.</DialogDescription>
                   </DialogHeader>
                   <div className="py-12">
                     <Input 
@@ -214,7 +212,7 @@ export default function Home() {
                       disabled={isJoining || joinCode.length < 6}
                       className="w-full bg-white text-black hover:bg-white/90 font-black uppercase tracking-widest h-14 rounded-none"
                     >
-                      {isJoining ? "Connecting..." : "Initialize Sync"}
+                      {isJoining ? "Joining..." : "Join"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -229,8 +227,8 @@ export default function Home() {
 
         <section className="space-y-8">
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Temporal Performance Data</h2>
-            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">Full Report</Link>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Total Tracked</h2>
+            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">Full Analytics</Link>
           </div>
           <AnalyticsCharts sessions={sessions || []} />
         </section>

@@ -42,16 +42,13 @@ export function Navbar() {
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   
-  // Create Room State
   const [newRoomName, setNewRoomName] = useState("")
   const [newRoomTopic, setNewRoomTopic] = useState("")
   const [isCreating, setIsCreating] = useState(false)
 
-  // Join Room State
   const [joinCode, setJoinCode] = useState("")
   const [isJoining, setIsJoining] = useState(false)
 
-  // Auth State
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -64,9 +61,9 @@ export function Navbar() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       setIsAuthDialogOpen(false)
-      toast({ title: "Session Resumed", description: "Welcome back." })
+      toast({ title: "Welcome Back", description: "Session started." })
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Access Denied", description: error.message })
+      toast({ variant: "destructive", title: "Login Error", description: error.message })
     } finally {
       setIsAuthLoading(false)
     }
@@ -80,9 +77,9 @@ export function Navbar() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(userCredential.user, { displayName: name })
       setIsAuthDialogOpen(false)
-      toast({ title: "Account Initialized", description: "Your study profile is ready." })
+      toast({ title: "Account Created", description: "You are ready to focus." })
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Registration Failed", description: error.message })
+      toast({ variant: "destructive", title: "Error", description: error.message })
     } finally {
       setIsAuthLoading(false)
     }
@@ -114,7 +111,16 @@ export function Navbar() {
     }
 
     setDoc(roomRef, roomData)
+      .then(() => {
+        setIsRoomDialogOpen(false)
+        setIsCreating(false)
+        setNewRoomName("")
+        setNewRoomTopic("")
+        toast({ title: "Room Created", description: `Join Code: ${code}` })
+        router.push(`/rooms/${roomId}`)
+      })
       .catch(async (error) => {
+        setIsCreating(false)
         const permissionError = new FirestorePermissionError({
           path: roomRef.path,
           operation: 'create',
@@ -122,16 +128,6 @@ export function Navbar() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
-
-    setIsRoomDialogOpen(false)
-    setIsCreating(false)
-    setNewRoomName("")
-    setNewRoomTopic("")
-    toast({
-      title: "Room Created",
-      description: `Room code: ${code}. Redirecting...`,
-    })
-    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -143,11 +139,7 @@ export function Navbar() {
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Code",
-          description: "No room found with this join code.",
-        })
+        toast({ variant: "destructive", title: "Invalid Code", description: "No room found." })
         setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
@@ -157,11 +149,7 @@ export function Navbar() {
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error Joining",
-        description: error.message || "Could not join room.",
-      })
+      toast({ variant: "destructive", title: "Error", description: error.message })
       setIsJoining(false)
     }
   }
@@ -176,8 +164,8 @@ export function Navbar() {
           </Link>
           
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Dashboard</Link>
-            <Link href="/analytics" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Analytics</Link>
+            <Link href="/" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Home</Link>
+            <Link href="/analytics" className="text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors opacity-60 hover:opacity-100">Stats</Link>
           </div>
         </div>
 
@@ -186,24 +174,22 @@ export function Navbar() {
             <>
               <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest bg-black">
+                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest bg-black text-white rounded-none">
                     <LogIn className="w-4 h-4" />
                     Join Room
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/20">
+                <DialogContent className="bg-black border-2 border-white/20 rounded-none">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Enter Room Code</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">
-                      Enter the 6-digit code shared by the room owner.
-                    </DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter">Enter Code</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Enter the 6-digit room code.</DialogDescription>
                   </DialogHeader>
                   <div className="py-8">
                     <Input
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
-                      placeholder="e.g. 123456"
-                      className="border-2 border-white/10 bg-black text-center text-2xl h-16 font-black tracking-[0.5em]"
+                      placeholder="000000"
+                      className="border-2 border-white/10 bg-black text-center text-2xl h-16 font-black tracking-[0.5em] rounded-none"
                       maxLength={6}
                     />
                   </div>
@@ -211,9 +197,9 @@ export function Navbar() {
                     <Button 
                       onClick={handleJoinRoom} 
                       disabled={isJoining || joinCode.length < 6}
-                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-bold uppercase tracking-widest"
+                      className="w-full bg-white text-black hover:bg-white/90 font-bold uppercase tracking-widest rounded-none h-12"
                     >
-                      {isJoining ? "Connecting..." : "Join Workspace"}
+                      {isJoining ? "Joining..." : "Join"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -221,35 +207,33 @@ export function Navbar() {
 
               <Dialog open={isRoomDialogOpen} onOpenChange={setIsRoomDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest bg-black">
+                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest bg-black text-white rounded-none">
                     <Plus className="w-4 h-4" />
                     Create Room
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/20">
+                <DialogContent className="bg-black border-2 border-white/20 rounded-none">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Launch Study Room</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">
-                      Set the focus for your new collaborative session.
-                    </DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter">Create Room</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Set up your workspace.</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Room Identity</Label>
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Name</Label>
                       <Input
                         value={newRoomName}
                         onChange={(e) => setNewRoomName(e.target.value)}
-                        placeholder="e.g. Deep Focus Architecture"
-                        className="border-2 border-white/10 bg-black"
+                        placeholder="e.g. Deep Focus"
+                        className="border-2 border-white/10 bg-black rounded-none"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Core Topic</Label>
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Topic</Label>
                       <Input
                         value={newRoomTopic}
                         onChange={(e) => setNewRoomTopic(e.target.value)}
-                        placeholder="e.g. UI Design"
-                        className="border-2 border-white/10 bg-black"
+                        placeholder="e.g. Physics"
+                        className="border-2 border-white/10 bg-black rounded-none"
                       />
                     </div>
                   </div>
@@ -257,75 +241,72 @@ export function Navbar() {
                     <Button 
                       onClick={handleCreateRoom} 
                       disabled={isCreating || !newRoomName || !newRoomTopic}
-                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-bold uppercase tracking-widest"
+                      className="w-full bg-white text-black hover:bg-white/90 font-bold uppercase tracking-widest rounded-none h-12"
                     >
-                      {isCreating ? "Initializing..." : "Activate Workspace"}
+                      {isCreating ? "Creating..." : "Create"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
 
               <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8 border border-white/10">
+                <Avatar className="h-8 w-8 border border-white/10 rounded-none">
                   <AvatarImage src={user.photoURL || ""} />
                   <AvatarFallback className="bg-white text-black font-black text-[10px]">{user.displayName?.[0] || "U"}</AvatarFallback>
                 </Avatar>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] uppercase font-bold tracking-widest opacity-60 hover:opacity-100 text-white">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Exit
+                  Logout
                 </Button>
               </div>
             </>
           ) : (
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest text-white bg-black">
+                <Button variant="outline" size="sm" className="border-2 border-white/10 hover:border-white/30 uppercase text-[10px] font-bold tracking-widest text-white bg-black rounded-none">
                   Sign In
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[400px] bg-black border-2 border-white/20">
+              <DialogContent className="sm:max-w-[400px] bg-black border-2 border-white/20 rounded-none">
                 <DialogHeader>
                   <DialogTitle className="font-black uppercase tracking-tighter text-2xl">ConnectStudy</DialogTitle>
-                  <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">
-                    Access the study collective.
-                  </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-white/5 border border-white/10">
-                    <TabsTrigger value="login" className="text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Login</TabsTrigger>
-                    <TabsTrigger value="register" className="text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Register</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-white/5 border border-white/10 rounded-none">
+                    <TabsTrigger value="login" className="text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-white data-[state=active]:text-black rounded-none">Login</TabsTrigger>
+                    <TabsTrigger value="register" className="text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-white data-[state=active]:text-black rounded-none">Register</TabsTrigger>
                   </TabsList>
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10" required />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10" required />
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
                       </div>
-                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black">
-                        {isAuthLoading ? "Authenticating..." : "Enter Workspace"}
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 rounded-none h-12">
+                        {isAuthLoading ? "Loading..." : "Login"}
                       </Button>
                     </form>
                   </TabsContent>
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
-                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2 border-white/10" required />
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Name</Label>
+                        <Input type="text" value={name} onChange={(e) => setName(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10" required />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Password</Label>
-                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10" required />
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-black border-2 border-white/10 rounded-none" required />
                       </div>
-                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black">
-                        {isAuthLoading ? "Initialising..." : "Create Profile"}
+                      <Button type="submit" disabled={isAuthLoading} className="w-full font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 rounded-none h-12">
+                        {isAuthLoading ? "Loading..." : "Register"}
                       </Button>
                     </form>
                   </TabsContent>
