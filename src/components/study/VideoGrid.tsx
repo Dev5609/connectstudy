@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, doc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore"
@@ -63,7 +63,7 @@ export function VideoGrid() {
         stream.getTracks().forEach((track) => track.stop())
       }
     }
-  }, [])
+  }, [toast])
 
   // Update Local Video Ref when stream or video toggle changes
   useEffect(() => {
@@ -137,8 +137,8 @@ export function VideoGrid() {
                 {!isVideoOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                     <Avatar className="w-20 h-20 border-2 border-white/10 rounded-none">
-                      <AvatarImage src={user.photoURL || ""} />
-                      <AvatarFallback className="font-black text-2xl">{user.displayName?.[0] || "U"}</AvatarFallback>
+                      <AvatarImage src={user?.photoURL || ""} />
+                      <AvatarFallback className="font-black text-2xl">{user?.displayName?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
