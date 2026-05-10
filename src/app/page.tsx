@@ -23,8 +23,6 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
 import {
   Select,
   SelectContent,
@@ -61,43 +59,41 @@ export default function Home() {
 
   const { data: sessions } = useCollection(userSessionsQuery)
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    const roomRef = doc(collection(db, "rooms"))
-    const roomId = roomRef.id
-    
-    const roomData = {
-      name: newRoomName,
-      topic: newRoomTopic,
-      type: roomType,
-      participantCount: 1,
-      createdAt: serverTimestamp(),
-      ownerId: user.uid,
-      joinCode: code,
-      image: `https://picsum.photos/seed/${roomId}/800/600`
-    }
+    try {
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const roomRef = doc(collection(db, "rooms"))
+      const roomId = roomRef.id
+      
+      const roomData = {
+        name: newRoomName,
+        topic: newRoomTopic,
+        type: roomType,
+        participantCount: 1,
+        createdAt: serverTimestamp(),
+        ownerId: user.uid,
+        joinCode: code,
+        image: `https://picsum.photos/seed/${roomId}/800/600`
+      }
 
-    setDoc(roomRef, roomData)
-      .then(() => {
-        setIsRoomDialogOpen(false)
-        setIsCreating(false)
-        setNewRoomName("")
-        setNewRoomTopic("")
-        toast({ title: "Room Created", description: `Join Code: ${code}` })
-        router.push(`/rooms/${roomId}`)
+      await setDoc(roomRef, roomData)
+      toast({ title: "Room Created", description: `Join Code: ${code}` })
+      setNewRoomName("")
+      setNewRoomTopic("")
+      setIsRoomDialogOpen(false)
+      router.push(`/rooms/${roomId}`)
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Creation Failed", 
+        description: "Could not establish room. Please try again." 
       })
-      .catch(async (error) => {
-        setIsCreating(false)
-        const permissionError = new FirestorePermissionError({
-          path: roomRef.path,
-          operation: 'create',
-          requestResourceData: roomData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleJoinRoom = async () => {
@@ -116,8 +112,8 @@ export default function Home() {
       if (querySnapshot.empty) {
         toast({ 
           variant: "destructive", 
-          title: "Code Not Found", 
-          description: "Please check the 6-digit code and try again." 
+          title: "Not Found", 
+          description: "No room matches this 6-digit code." 
         })
       } else {
         const roomDoc = querySnapshot.docs[0]
@@ -128,8 +124,8 @@ export default function Home() {
     } catch (error: any) {
       toast({ 
         variant: "destructive", 
-        title: "Access Denied", 
-        description: "Could not find room. Ensure you are signed in." 
+        title: "Error", 
+        description: "Connection failed. Please sign in and try again." 
       })
     } finally {
       setIsJoining(false)

@@ -28,8 +28,6 @@ import { useState } from "react"
 import { collection, doc, setDoc, serverTimestamp, query, where, getDocs, limit } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
 import {
   Select,
   SelectContent,
@@ -99,43 +97,41 @@ export function Navbar() {
     router.push("/")
   }
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    const roomRef = doc(collection(db, "rooms"))
-    const roomId = roomRef.id
-    
-    const roomData = {
-      name: newRoomName,
-      topic: newRoomTopic,
-      type: roomType,
-      participantCount: 1,
-      createdAt: serverTimestamp(),
-      ownerId: user.uid,
-      joinCode: code,
-      image: `https://picsum.photos/seed/${roomId}/800/600`
-    }
+    try {
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const roomRef = doc(collection(db, "rooms"))
+      const roomId = roomRef.id
+      
+      const roomData = {
+        name: newRoomName,
+        topic: newRoomTopic,
+        type: roomType,
+        participantCount: 1,
+        createdAt: serverTimestamp(),
+        ownerId: user.uid,
+        joinCode: code,
+        image: `https://picsum.photos/seed/${roomId}/800/600`
+      }
 
-    setDoc(roomRef, roomData)
-      .then(() => {
-        setIsRoomDialogOpen(false)
-        setIsCreating(false)
-        setNewRoomName("")
-        setNewRoomTopic("")
-        toast({ title: "Room Created", description: `Join Code: ${code}` })
-        router.push(`/rooms/${roomId}`)
+      await setDoc(roomRef, roomData)
+      toast({ title: "Room Created", description: `Join Code: ${code}` })
+      setNewRoomName("")
+      setNewRoomTopic("")
+      setIsRoomDialogOpen(false)
+      router.push(`/rooms/${roomId}`)
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Creation Error", 
+        description: "Could not start session. Please check your connection." 
       })
-      .catch(async (error) => {
-        setIsCreating(false)
-        const permissionError = new FirestorePermissionError({
-          path: roomRef.path,
-          operation: 'create',
-          requestResourceData: roomData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleJoinRoom = async () => {
