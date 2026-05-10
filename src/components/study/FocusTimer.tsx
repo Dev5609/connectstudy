@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -33,7 +34,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   
   const [pomoDuration, setPomoDuration] = useState(25)
   const [breakDuration, setBreakDuration] = useState(5)
-  const [customDuration, setCustomDuration] = useState(40)
+  const [customDuration, setCustomDuration] = useState(20)
 
   const saveSession = useCallback(async (durationSeconds: number) => {
     if (!db || !user || durationSeconds < 60) return
@@ -115,17 +116,17 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
   }
 
   return (
-    <Card className="p-6 md:p-10 border-2 border-white/10 shadow-2xl flex flex-col items-center gap-6 md:gap-8 bg-black">
+    <Card className="p-6 md:p-10 border-2 border-white/10 shadow-2xl flex flex-col items-center gap-6 md:gap-8 bg-black rounded-none">
       <Tabs value={mode} onValueChange={handleModeChange} className="w-full max-w-[280px]">
-        <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10">
-          <TabsTrigger value="infinite" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Flow</TabsTrigger>
-          <TabsTrigger value="custom" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Fix</TabsTrigger>
-          <TabsTrigger value="pomodoro" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black">Pomo</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10 rounded-none h-12">
+          <TabsTrigger value="infinite" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black rounded-none">Flow</TabsTrigger>
+          <TabsTrigger value="custom" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black rounded-none">Fix</TabsTrigger>
+          <TabsTrigger value="pomodoro" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-black rounded-none">Pomo</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <div className="flex flex-col items-center gap-2">
-        <span className="text-7xl md:text-9xl font-black tracking-tighter font-mono leading-none">
+        <span className="text-6xl md:text-9xl font-black tracking-tighter font-mono leading-none">
           {formatTime(timeLeft)}
         </span>
         <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-muted-foreground mt-2">
@@ -137,7 +138,7 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
         <Button 
           variant="outline" 
           size="icon" 
-          className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all" 
+          className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all rounded-none" 
           onClick={resetTimer}
         >
           <RotateCcw className="w-5 h-5" />
@@ -156,36 +157,46 @@ export function FocusTimer({ roomContext = "Personal Session" }: FocusTimerProps
             <Button 
               variant="outline" 
               size="icon" 
-              className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all"
+              className="h-10 w-10 md:h-12 md:w-12 border-2 border-white/10 hover:bg-white hover:text-black transition-all rounded-none"
             >
               <Settings2 className="w-5 h-5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 space-y-4 bg-black border-2 border-white/20 p-6">
+          <PopoverContent className="w-64 space-y-4 bg-black border-2 border-white/20 p-6 rounded-none">
             <h4 className="text-[10px] font-bold uppercase tracking-widest border-b border-white/10 pb-2">Configuration</h4>
             <div className="grid gap-4 py-2">
               <div className="grid gap-2">
-                <Label htmlFor="pomo" className="text-[10px] uppercase font-bold opacity-60">Pomo Duration</Label>
+                <Label htmlFor="pomo" className="text-[10px] uppercase font-bold opacity-60">Pomo Duration (min)</Label>
                 <Input 
                   id="pomo" 
                   type="number" 
                   value={pomoDuration} 
                   onChange={(e) => setPomoDuration(Number(e.target.value))} 
-                  className="h-8 text-xs bg-white/5 border-white/20"
+                  className="h-10 text-xs bg-white/5 border-white/20 rounded-none text-white"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="break" className="text-[10px] uppercase font-bold opacity-60">Break Duration</Label>
+                <Label htmlFor="custom" className="text-[10px] uppercase font-bold opacity-60">Fix Mode Duration (min)</Label>
+                <Input 
+                  id="custom" 
+                  type="number" 
+                  value={customDuration} 
+                  onChange={(e) => setCustomDuration(Number(e.target.value))} 
+                  className="h-10 text-xs bg-white/5 border-white/20 rounded-none text-white"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="break" className="text-[10px] uppercase font-bold opacity-60">Break Duration (min)</Label>
                 <Input 
                   id="break" 
                   type="number" 
                   value={breakDuration} 
                   onChange={(e) => setBreakDuration(Number(e.target.value))} 
-                  className="h-8 text-xs bg-white/5 border-white/20"
+                  className="h-10 text-xs bg-white/5 border-white/20 rounded-none text-white"
                 />
               </div>
             </div>
-            <Button className="w-full text-[10px] uppercase font-bold bg-white text-black hover:bg-white/90" onClick={resetTimer}>
+            <Button className="w-full text-[10px] uppercase font-bold bg-white text-black hover:bg-white/90 rounded-none h-10" onClick={resetTimer}>
               Update & Reset
             </Button>
           </PopoverContent>

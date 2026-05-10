@@ -25,6 +25,13 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function Home() {
   const db = useFirestore()
@@ -37,6 +44,7 @@ export default function Home() {
   
   const [newRoomName, setNewRoomName] = useState("")
   const [newRoomTopic, setNewRoomTopic] = useState("")
+  const [roomType, setRoomType] = useState("public")
   const [isCreating, setIsCreating] = useState(false)
 
   const [joinCode, setJoinCode] = useState("")
@@ -64,7 +72,7 @@ export default function Home() {
     const roomData = {
       name: newRoomName,
       topic: newRoomTopic,
-      type: "public",
+      type: roomType,
       participantCount: 1,
       createdAt: serverTimestamp(),
       ownerId: user.uid,
@@ -73,7 +81,16 @@ export default function Home() {
     }
 
     setDoc(roomRef, roomData)
+      .then(() => {
+        setIsRoomDialogOpen(false)
+        setIsCreating(false)
+        setNewRoomName("")
+        setNewRoomTopic("")
+        toast({ title: "Room Created", description: `Join Code: ${code}` })
+        router.push(`/rooms/${roomId}`)
+      })
       .catch(async (error) => {
+        setIsCreating(false)
         const permissionError = new FirestorePermissionError({
           path: roomRef.path,
           operation: 'create',
@@ -81,13 +98,6 @@ export default function Home() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
-
-    setIsRoomDialogOpen(false)
-    setIsCreating(false)
-    setNewRoomName("")
-    setNewRoomTopic("")
-    toast({ title: "Room Created", description: `Join Code: ${code}` })
-    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -153,10 +163,10 @@ export default function Home() {
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
+                <DialogContent className="bg-black border-2 border-white/10 rounded-none w-[95vw] max-w-md">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">Create Room</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Name your study space.</DialogDescription>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Define your study workspace.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-6 py-8">
                     <div className="grid gap-2">
@@ -176,6 +186,18 @@ export default function Home() {
                         className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40 text-white" 
                         placeholder="e.g. Physics"
                       />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40 text-white">Privacy</Label>
+                      <Select value={roomType} onValueChange={setRoomType}>
+                        <SelectTrigger className="bg-black border-2 border-white/10 rounded-none h-12 text-white">
+                          <SelectValue placeholder="Public" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black border-2 border-white/20 text-white rounded-none">
+                          <SelectItem value="public">Public</SelectItem>
+                          <SelectItem value="private">Private</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <DialogFooter>
@@ -201,7 +223,7 @@ export default function Home() {
                     <LogIn className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
+                <DialogContent className="bg-black border-2 border-white/10 rounded-none w-[95vw] max-w-md">
                   <DialogHeader>
                     <DialogTitle className="font-black uppercase tracking-tighter text-2xl text-white">Join Room</DialogTitle>
                     <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Enter the 6-digit room code.</DialogDescription>

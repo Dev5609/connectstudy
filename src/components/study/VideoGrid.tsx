@@ -45,8 +45,8 @@ export function VideoGrid() {
     } catch (err) {
       toast({
         variant: "destructive",
-        title: "Hardware Blocked",
-        description: "Camera and microphone access denied.",
+        title: "Access Denied",
+        description: "Camera and microphone access is required for real-time study.",
       })
     }
   }, [toast])
@@ -81,7 +81,7 @@ export function VideoGrid() {
       joinedAt: serverTimestamp(),
       isMicOn: isMicOn,
       isVideoOn: isVideoOn,
-      status: isVideoOn ? "Active Focus" : "Private",
+      status: isVideoOn ? "Live Focus" : "Private",
       lastActive: serverTimestamp()
     }, { merge: true })
 
@@ -116,7 +116,7 @@ export function VideoGrid() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {participants?.map((p: any) => (
-          <div key={p.id} className="relative aspect-video bg-black group border-2 border-white/10 transition-all hover:border-white/30">
+          <div key={p.id} className="relative aspect-video bg-black group border-2 border-white/10 transition-all hover:border-white/30 rounded-none">
             {p.id === user?.uid ? (
               <div className="relative w-full h-full bg-black">
                 <video
@@ -124,7 +124,7 @@ export function VideoGrid() {
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover saturate-100 grayscale-0 ${!isVideoOn ? 'hidden' : ''}`}
+                  className={`w-full h-full object-cover saturate-100 ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black">
@@ -142,7 +142,7 @@ export function VideoGrid() {
                      <img 
                        src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
                        alt={p.name} 
-                       className="w-full h-full object-cover opacity-100 saturate-100 grayscale-0"
+                       className="w-full h-full object-cover opacity-100 saturate-100"
                      />
                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">Live Focus</span>
@@ -173,7 +173,7 @@ export function VideoGrid() {
         ))}
       </div>
 
-      <div className="flex justify-center items-center gap-6 py-8 bg-black border-2 border-white/10">
+      <div className="flex justify-center items-center gap-6 py-8 bg-black border-2 border-white/10 rounded-none">
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
