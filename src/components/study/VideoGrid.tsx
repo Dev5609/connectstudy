@@ -131,7 +131,7 @@ export function VideoGrid() {
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover grayscale brightness-75 ${!isVideoOn ? 'hidden' : ''}`}
+                  className={`w-full h-full object-cover ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/80">
@@ -149,7 +149,7 @@ export function VideoGrid() {
                      <img 
                        src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
                        alt={p.name} 
-                       className="w-full h-full object-cover grayscale opacity-40 blur-[1px]"
+                       className="w-full h-full object-cover opacity-60"
                      />
                      <div className="absolute inset-0 flex items-center justify-center">
                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50">Streaming</span>

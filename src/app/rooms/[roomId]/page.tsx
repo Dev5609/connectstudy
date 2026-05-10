@@ -7,15 +7,18 @@ import { FocusTimer } from "@/components/study/FocusTimer"
 import { VideoGrid } from "@/components/study/VideoGrid"
 import { ChatPanel } from "@/components/study/ChatPanel"
 import { Button } from "@/components/ui/button"
-import { LogOut, Info, Loader2, Copy } from "lucide-react"
-import { useDoc, useFirestore } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { LogOut, Info, Loader2, Copy, Trash2 } from "lucide-react"
+import { useDoc, useFirestore, useUser } from "@/firebase"
+import { doc, deleteDoc } from "firebase/firestore"
 import { useMemo } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function StudyRoomPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useUser()
   const { toast } = useToast()
   const roomId = params.roomId as string
   const db = useFirestore()
@@ -41,6 +44,24 @@ export default function StudyRoomPage() {
     router.push("/")
   }
 
+  const handleDeleteRoom = () => {
+    if (!db || !roomId || !user || !room) return
+    if (confirm("Are you sure you want to delete this room?")) {
+      const roomRef = doc(db, "rooms", roomId)
+      deleteDoc(roomRef)
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: roomRef.path,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
+      
+      toast({ title: "Room Deleted", description: "The workspace has been closed." })
+      router.push("/")
+    }
+  }
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-black">
@@ -62,6 +83,8 @@ export default function StudyRoomPage() {
       </div>
     )
   }
+
+  const isOwner = user?.uid === room.ownerId
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-black text-white">
@@ -87,6 +110,17 @@ export default function StudyRoomPage() {
             </div>
             
             <div className="flex items-center gap-3">
+              {isOwner && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 rounded-none border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white uppercase font-bold tracking-widest h-10 px-6 transition-all" 
+                  onClick={handleDeleteRoom}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Room
+                </Button>
+              )}
               <Button variant="destructive" size="sm" className="gap-2 rounded-none uppercase font-bold tracking-widest h-10 px-6" onClick={handleLeave}>
                 <LogOut className="w-4 h-4" />
                 Leave
