@@ -1,7 +1,8 @@
+
 "use client"
 
 import { useState, useRef } from "react"
-import { Send, Image as ImageIcon, FileText, Smile, Loader2 } from "lucide-react"
+import { Send, Image as ImageIcon, FileText, Smile, Loader2, Download, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,6 +21,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   const db = useFirestore()
   const { toast } = useToast()
   const [inputValue, setInputValue] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const messagesQuery = useMemoFirebase(() => {
@@ -33,15 +35,19 @@ export function ChatPanel({ roomId }: { roomId: string }) {
 
   const { data: messages, loading } = useCollection(messagesQuery)
 
-  const sendMessage = async (content: string) => {
-    if (!content.trim() || !db || !user || !roomId) return
+  const sendMessage = async (content: string, fileData?: { name: string, type: string, data: string }) => {
+    if ((!content.trim() && !fileData) || !db || !user || !roomId) return
     
     const messageData = {
       userId: user.uid,
       userName: user.displayName || "Anonymous",
       userAvatar: user.photoURL || "",
       content: content,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
+      type: fileData ? 'file' : 'text',
+      fileName: fileData?.name || null,
+      fileType: fileData?.type || null,
+      fileUrl: fileData?.data || null
     }
 
     addDoc(collection(db, "rooms", roomId, "messages"), messageData)
@@ -50,14 +56,33 @@ export function ChatPanel({ roomId }: { roomId: string }) {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      // Functional: We simulate a file share message since we don't have storage yet
-      sendMessage(`Sent a file: ${file.name}`)
+    if (!file) return
+
+    if (file.size > 1048576) { // 1MB limit for base64 prototype
       toast({
-        title: "File Shared",
-        description: `${file.name} was shared in chat.`,
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload files smaller than 1MB for this prototype.",
+      })
+      return
+    }
+
+    setIsUploading(true)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string
+      sendMessage("", {
+        name: file.name,
+        type: file.type,
+        data: base64
+      })
+      setIsUploading(false)
+      toast({
+        title: "File Uploaded",
+        description: `${file.name} is ready for the group.`,
       })
     }
+    reader.readAsDataURL(file)
   }
 
   const sendEmoji = (emoji: string) => {
@@ -65,10 +90,10 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full border-l bg-background w-80 lg:w-96">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h3 className="font-black text-xs uppercase tracking-[0.2em]">In-Room Chat</h3>
-        <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 font-bold uppercase">Live</span>
+    <div className="flex flex-col h-full border-l border-white/10 bg-black w-80 lg:w-96">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <h3 className="font-black text-[10px] uppercase tracking-[0.4em]">Collective Chat</h3>
+        <span className="text-[8px] bg-white text-black px-2 py-0.5 font-bold uppercase tracking-widest">Live Sync</span>
       </div>
       
       <ScrollArea className="flex-1 p-4">
@@ -80,34 +105,51 @@ export function ChatPanel({ roomId }: { roomId: string }) {
           <div className="space-y-6">
             {messages?.map((m: any) => (
               <div key={m.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <Avatar className="w-8 h-8 shrink-0 border">
+                <Avatar className="w-8 h-8 shrink-0 border border-white/10 rounded-none">
                   <AvatarImage src={m.userAvatar} />
-                  <AvatarFallback className="text-[10px] font-bold">{m.userName?.[0]}</AvatarFallback>
+                  <AvatarFallback className="text-[10px] font-bold bg-white/5">{m.userName?.[0]}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 flex-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-black uppercase tracking-tight">{m.userName}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">
+                    <span className="text-[10px] font-black uppercase tracking-tight">{m.userName}</span>
+                    <span className="text-[8px] text-muted-foreground uppercase font-bold opacity-40">
                       {m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed text-foreground/80">{m.content}</p>
+                  
+                  {m.type === 'file' ? (
+                    <div className="mt-1 p-3 bg-white/5 border border-white/10 flex items-center justify-between group">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <Paperclip className="w-4 h-4 opacity-40 shrink-0" />
+                        <span className="text-[10px] font-bold uppercase truncate tracking-widest">{m.fileName}</span>
+                      </div>
+                      <a 
+                        href={m.fileUrl} 
+                        download={m.fileName}
+                        className="p-1 hover:bg-white/10 transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-xs leading-relaxed text-white/70">{m.content}</p>
+                  )}
                 </div>
               </div>
             ))}
             {messages && messages.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-30">No messages yet. Say hi!</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-20">Transmission Log Empty</p>
               </div>
             )}
           </div>
         )}
       </ScrollArea>
       
-      <div className="p-4 border-t space-y-3 bg-secondary/10">
+      <div className="p-4 border-t border-white/10 space-y-3 bg-black">
         {!user ? (
           <div className="text-center p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Login to participate</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Authentication required</p>
           </div>
         ) : (
           <>
@@ -121,45 +163,37 @@ export function ChatPanel({ roomId }: { roomId: string }) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                disabled={isUploading}
+                className="h-8 w-8 text-muted-foreground hover:text-white hover:bg-white/5 rounded-none"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <ImageIcon className="w-4 h-4" />
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
               </Button>
               
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white hover:bg-white/5 rounded-none">
                     <Smile className="w-4 h-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-2 flex gap-2">
+                <PopoverContent side="top" className="w-full p-2 flex gap-2 bg-black border border-white/20">
                   {['🔥', '👏', '💯', '👋', '✅'].map(emoji => (
-                    <Button key={emoji} variant="ghost" size="sm" onClick={() => sendEmoji(emoji)}>
+                    <Button key={emoji} variant="ghost" size="sm" className="hover:bg-white/10" onClick={() => sendEmoji(emoji)}>
                       {emoji}
                     </Button>
                   ))}
                 </PopoverContent>
               </Popover>
-
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => sendMessage("Let's focus on the task!")}
-              >
-                <FileText className="w-4 h-4" />
-              </Button>
             </div>
             <div className="flex gap-2">
               <Input 
-                placeholder="Type a message..." 
-                className="flex-1 text-sm bg-background border-2 rounded-none" 
+                placeholder="Message study room..." 
+                className="flex-1 text-xs bg-black border-2 border-white/10 rounded-none h-10 focus-visible:border-white/40 transition-all" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage(inputValue)}
               />
-              <Button size="icon" className="shrink-0 rounded-none" onClick={() => sendMessage(inputValue)}>
+              <Button size="icon" className="shrink-0 rounded-none h-10 w-10 bg-white text-black hover:bg-white/90" onClick={() => sendMessage(inputValue)}>
                 <Send className="w-4 h-4" />
               </Button>
             </div>

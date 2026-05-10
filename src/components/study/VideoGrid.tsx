@@ -1,9 +1,10 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2, Info } from "lucide-react"
+import { Mic, MicOff, Video, VideoOff, MoreVertical, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, doc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore"
@@ -34,6 +35,7 @@ export function VideoGrid() {
 
   const { data: participants, loading } = useCollection(participantsQuery)
 
+  // Media Initialization
   useEffect(() => {
     let stream: MediaStream | null = null
 
@@ -44,15 +46,12 @@ export function VideoGrid() {
           audio: true,
         })
         setLocalStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
       } catch (err) {
-        console.error("Error accessing media devices:", err)
+        console.error("Media Access Error:", err)
         toast({
           variant: "destructive",
-          title: "Media Error",
-          description: "Could not access camera or microphone.",
+          title: "Hardware Blocked",
+          description: "Ensure your camera and microphone are allowed.",
         })
       }
     }
@@ -66,13 +65,18 @@ export function VideoGrid() {
     }
   }, [])
 
+  // Update Local Video Ref when stream or video toggle changes
   useEffect(() => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach((track) => (track.enabled = isVideoOn))
-      localStream.getAudioTracks().forEach((track) => (track.enabled = isMicOn))
+    if (videoRef.current && localStream) {
+      videoRef.current.srcObject = isVideoOn ? localStream : null
     }
-  }, [isVideoOn, isMicOn, localStream])
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => track.enabled = isVideoOn)
+      localStream.getAudioTracks().forEach(track => track.enabled = isMicOn)
+    }
+  }, [localStream, isVideoOn, isMicOn])
 
+  // Broadcast presence and state to room
   useEffect(() => {
     if (!db || !user || !roomId) return
 
@@ -84,21 +88,23 @@ export function VideoGrid() {
       joinedAt: serverTimestamp(),
       isMicOn: isMicOn,
       isVideoOn: isVideoOn,
-      status: "Focusing"
+      status: isVideoOn ? "Deep Focus" : "Private Mode",
+      lastActive: serverTimestamp()
     }, { merge: true })
 
+    // Heartbeat to keep participant list clean
+    const heartbeat = setInterval(() => {
+      updateDoc(participantRef, { lastActive: serverTimestamp() }).catch(() => {})
+    }, 30000)
+
     return () => {
+      clearInterval(heartbeat)
       deleteDoc(participantRef).catch(() => {})
     }
   }, [db, user, roomId, isMicOn, isVideoOn])
 
-  const toggleMic = () => {
-    setIsMicOn(!isMicOn)
-  }
-
-  const toggleVideo = () => {
-    setIsVideoOn(!isVideoOn)
-  }
+  const toggleMic = () => setIsMicOn(!isMicOn)
+  const toggleVideo = () => setIsVideoOn(!isVideoOn)
 
   const changeStatus = (newStatus: string) => {
     if (!db || !user || !roomId) return
@@ -108,8 +114,8 @@ export function VideoGrid() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 border-2 border-dashed border-primary/20">
-        <Loader2 className="w-6 h-6 animate-spin opacity-20" />
+      <div className="flex items-center justify-center h-64 border-2 border-white/5 bg-black">
+        <Loader2 className="w-8 h-8 animate-spin opacity-20" />
       </div>
     )
   }
@@ -118,21 +124,21 @@ export function VideoGrid() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {participants?.map((p: any) => (
-          <div key={p.id} className="relative aspect-video bg-muted group overflow-hidden border-2 border-primary/10">
+          <div key={p.id} className="relative aspect-video bg-black group border-2 border-white/10 transition-all hover:border-white/30">
             {p.id === user?.uid ? (
-              <div className="relative w-full h-full bg-black">
+              <div className="relative w-full h-full">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover transition-all duration-500 ${!isVideoOn ? 'hidden' : ''}`}
+                  className={`w-full h-full object-cover grayscale brightness-75 ${!isVideoOn ? 'hidden' : ''}`}
                 />
                 {!isVideoOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-card">
-                    <Avatar className="w-16 h-16 border-2 border-primary/20 shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                    <Avatar className="w-20 h-20 border-2 border-white/10 rounded-none">
                       <AvatarImage src={user.photoURL || ""} />
-                      <AvatarFallback className="font-bold text-xl">{user.displayName?.[0] || "U"}</AvatarFallback>
+                      <AvatarFallback className="font-black text-2xl">{user.displayName?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
@@ -140,65 +146,70 @@ export function VideoGrid() {
             ) : (
               <div className="relative w-full h-full">
                 {p.isVideoOn ? (
-                   <img 
-                     src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
-                     alt={p.name} 
-                     className="w-full h-full object-cover grayscale opacity-50"
-                   />
+                   <div className="w-full h-full relative">
+                     <img 
+                       src={p.photoURL || `https://picsum.photos/seed/${p.id}/400/300`} 
+                       alt={p.name} 
+                       className="w-full h-full object-cover grayscale opacity-40 blur-[1px]"
+                     />
+                     <div className="absolute inset-0 flex items-center justify-center">
+                       <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50">Streaming</span>
+                     </div>
+                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-card">
-                     <Avatar className="w-16 h-16 border-2 border-primary/20 shadow-lg">
+                  <div className="flex items-center justify-center h-full bg-black/90">
+                     <Avatar className="w-20 h-20 border-2 border-white/5 rounded-none">
                       <AvatarImage src={p.photoURL} />
-                      <AvatarFallback className="font-bold text-xl">{p.name?.[0]}</AvatarFallback>
+                      <AvatarFallback className="font-black text-2xl opacity-40">{p.name?.[0]}</AvatarFallback>
                     </Avatar>
                   </div>
                 )}
               </div>
             )}
             
-            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black to-transparent flex items-center justify-between opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="flex flex-col">
-                <span className="text-white text-xs font-bold uppercase tracking-tight">{p.name} {p.id === user?.uid && "(You)"}</span>
-                <span className="text-white/70 text-[10px] uppercase tracking-[0.2em] font-medium">{p.status}</span>
+                <span className="text-white text-[10px] font-black uppercase tracking-tight">{p.name} {p.id === user?.uid && "(You)"}</span>
+                <span className="text-white/40 text-[8px] uppercase tracking-[0.3em] font-bold">{p.status}</span>
               </div>
               <div className="flex gap-2">
-                {!p.isMicOn && <MicOff className="w-3.5 h-3.5 text-destructive" />}
-                {p.isMicOn && <Mic className="w-3.5 h-3.5 text-white" />}
+                {!p.isMicOn && <MicOff className="w-3.5 h-3.5 text-red-500" />}
+                {p.isMicOn && <Mic className="w-3.5 h-3.5 text-white/60" />}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-center items-center gap-8 py-6 bg-card border-2 border-primary/10 mt-4 shadow-xl">
+      <div className="flex justify-center items-center gap-6 py-8 bg-black border-2 border-white/10 shadow-2xl">
         <Button 
           variant={isMicOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleMic}
-          className="rounded-none h-12 w-12 border-2 border-primary/20"
+          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black"
         >
-          {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
         </Button>
         <Button 
           variant={isVideoOn ? "outline" : "destructive"} 
           size="icon" 
           onClick={toggleVideo}
-          className="rounded-none h-12 w-12 border-2 border-primary/20"
+          className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black"
         >
-          {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+          {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
-        <div className="w-px h-8 bg-primary/20" />
+        <div className="w-[1px] h-10 bg-white/10" />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-none h-12 w-12 border-2 border-primary/20">
-              <MoreVertical className="w-5 h-5" />
+            <Button variant="outline" size="icon" className="rounded-none h-14 w-14 border-2 border-white/10 hover:border-white/40 bg-black">
+              <MoreVertical className="w-6 h-6" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-card border-primary/20">
-            <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-xs uppercase font-bold">Deep Work</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Reading")} className="text-xs uppercase font-bold">Reading</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => changeStatus("Coffee Break")} className="text-xs uppercase font-bold">Coffee Break</DropdownMenuItem>
+          <DropdownMenuContent align="end" className="bg-black border-2 border-white/20 rounded-none min-w-[160px]">
+            <DropdownMenuItem onClick={() => changeStatus("Deep Work")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Deep Work</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Analytical Review")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Analytical Review</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => changeStatus("Coffee Interval")} className="text-[10px] uppercase font-black tracking-widest p-4 cursor-pointer hover:bg-white hover:text-black">Coffee Interval</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Bar, BarChart, XAxis, CartesianGrid } from "recharts"
@@ -11,8 +12,8 @@ interface AnalyticsChartsProps {
 
 const chartConfig = {
   focus: {
-    label: "Focus Time (min)",
-    color: "hsl(var(--primary))",
+    label: "Focus (min)",
+    color: "#ffffff",
   },
 } satisfies ChartConfig
 
@@ -40,27 +41,27 @@ export function AnalyticsCharts({ sessions = [] }: AnalyticsChartsProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-4">
-      <Card className="col-span-1 lg:col-span-2 border-2 border-white/10 bg-black">
-        <CardHeader>
-          <CardTitle className="text-sm font-bold uppercase tracking-widest">Weekly Activity</CardTitle>
-          <CardDescription className="text-[10px] uppercase opacity-60">Focus time per day (minutes)</CardDescription>
+      <Card className="col-span-1 lg:col-span-2 border-2 border-white/10 bg-black rounded-none shadow-none">
+        <CardHeader className="border-b border-white/5 pb-4">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em]">Weekly Deep Work</CardTitle>
+          <CardDescription className="text-[8px] uppercase opacity-40">Focus distribution per day (minutes)</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px] md:h-[250px] w-full">
+        <CardContent className="pt-8">
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
             <BarChart data={chartData}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.1} stroke="#ffffff" />
+              <CartesianGrid vertical={false} strokeDasharray="4 4" opacity={0.05} stroke="#ffffff" />
               <XAxis 
                 dataKey="day" 
                 tickLine={false} 
                 axisLine={false} 
-                tick={{ fontSize: 10, fontWeight: 700, fill: '#ffffff' }}
+                tick={{ fontSize: 9, fontWeight: 900, fill: '#ffffff', opacity: 0.4 }}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip content={<ChartTooltipContent className="bg-black border-white/20 rounded-none" />} />
               <Bar 
                 dataKey="focus" 
                 fill="#ffffff" 
                 radius={[0, 0, 0, 0]} 
-                barSize={30}
+                barSize={32}
               />
             </BarChart>
           </ChartContainer>
@@ -68,19 +69,19 @@ export function AnalyticsCharts({ sessions = [] }: AnalyticsChartsProps) {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 col-span-1 lg:col-span-2">
-        <Card className="border-2 border-white/10 flex flex-col justify-center p-6 md:p-8 bg-black">
-          <span className="text-[10px] uppercase tracking-[0.2em] opacity-40">Total Tracked</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-5xl md:text-6xl font-black tracking-tighter">{sessions.length}</span>
-            <span className="text-xs font-bold uppercase opacity-60">Sessions</span>
+        <Card className="border-2 border-white/10 flex flex-col justify-center p-8 bg-black rounded-none shadow-none">
+          <span className="text-[10px] uppercase font-black tracking-[0.4em] opacity-30">Total Sessions</span>
+          <div className="flex items-baseline gap-3 mt-4">
+            <span className="text-6xl font-black tracking-tighter">{sessions.length}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-20">Units</span>
           </div>
         </Card>
         
-        <Card className="border-2 border-white/10 p-6 md:p-8 flex flex-col justify-center bg-black">
-          <span className="text-[10px] uppercase tracking-[0.2em] opacity-40">Weekly Total</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-5xl md:text-6xl font-black tracking-tighter">{totalFocusHours}</span>
-            <span className="text-xs font-bold uppercase opacity-60">Hours</span>
+        <Card className="border-2 border-white/10 p-8 flex flex-col justify-center bg-black rounded-none shadow-none">
+          <span className="text-[10px] uppercase font-black tracking-[0.4em] opacity-30">Weekly Accumulation</span>
+          <div className="flex items-baseline gap-3 mt-4">
+            <span className="text-6xl font-black tracking-tighter">{totalFocusHours}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-20">Hours</span>
           </div>
         </Card>
       </div>

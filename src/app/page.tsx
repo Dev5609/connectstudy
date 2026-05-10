@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/Navbar"
 import { FocusTimer } from "@/components/study/FocusTimer"
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Plus, LogIn, Loader2 } from "lucide-react"
+import { BookOpen, Plus, LogIn } from "lucide-react"
 import Link from "next/link"
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
 import { collection, query, limit, orderBy, doc, setDoc } from "firebase/firestore"
@@ -56,7 +56,7 @@ export default function Home() {
 
   const { data: sessions } = useCollection(userSessionsQuery)
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!db || !user || !newRoomName || !newRoomTopic) return
     setIsCreating(true)
 
@@ -76,7 +76,16 @@ export default function Home() {
     }
 
     setDoc(roomRef, roomData)
+      .then(() => {
+        setIsRoomDialogOpen(false)
+        setIsCreating(false)
+        setNewRoomName("")
+        setNewRoomTopic("")
+        toast({ title: "Workspace Activated", description: `Join Code: ${code}.` })
+        router.push(`/rooms/${roomId}`)
+      })
       .catch(async (error) => {
+        setIsCreating(false)
         const permissionError = new FirestorePermissionError({
           path: roomRef.path,
           operation: 'create',
@@ -84,14 +93,6 @@ export default function Home() {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
-
-    // Optimistic navigation
-    setIsRoomDialogOpen(false)
-    setIsCreating(false)
-    setNewRoomName("")
-    setNewRoomTopic("")
-    toast({ title: "Workspace Launching", description: `Room code: ${code}. Redirecting...` })
-    router.push(`/rooms/${roomId}`)
   }
 
   const handleJoinRoom = async () => {
@@ -103,7 +104,7 @@ export default function Home() {
       const querySnapshot = await getDocs(q)
       
       if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Invalid Code", description: "No room found with this code." })
+        toast({ variant: "destructive", title: "Invalid Protocol", description: "No workspace matches this code." })
         setIsJoining(false)
       } else {
         const roomDoc = querySnapshot.docs[0]
@@ -113,7 +114,7 @@ export default function Home() {
         router.push(`/rooms/${roomDoc.id}`)
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
+      toast({ variant: "destructive", title: "Sync Error", description: error.message })
       setIsJoining(false)
     }
   }
@@ -122,15 +123,15 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-black text-white">
       <Navbar />
       
-      <main className="flex-1 container mx-auto px-4 md:px-6 py-8 md:py-12 space-y-12 md:space-y-16">
+      <main className="flex-1 container mx-auto px-4 md:px-6 py-8 md:py-12 space-y-12 md:space-y-16 max-w-7xl">
         <section className="grid lg:grid-cols-3 gap-8 md:gap-12 items-center">
           <div className="lg:col-span-1 space-y-8 text-center lg:text-left">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.85] uppercase">
-                DEEP WORK.<br />TOGETHER.
+              <h1 className="text-5xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.85] uppercase">
+                SILENT.<br />FOCUS.
               </h1>
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto lg:mx-0 uppercase tracking-widest font-bold opacity-60">
-                Synchronized focus. Minimalist aesthetics.
+              <p className="text-muted-foreground text-[10px] leading-relaxed max-w-sm mx-auto lg:mx-0 uppercase tracking-[0.4em] font-black opacity-40">
+                Architectural productivity collective.
               </p>
             </div>
             
@@ -139,34 +140,34 @@ export default function Home() {
                 <DialogTrigger asChild>
                   <Button 
                     size="lg" 
-                    className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest"
+                    className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest h-16"
                   >
-                    Create Room
+                    Establish Room
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/20">
+                <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Launch Workspace</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Define your focus objective.</DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Initialize Workspace</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Set the collective focus objective.</DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
+                  <div className="space-y-6 py-8">
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Room Name</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Workspace Identity</Label>
                       <Input 
                         value={newRoomName} 
                         onChange={(e) => setNewRoomName(e.target.value)} 
-                        className="bg-black border-2 border-white/10" 
-                        placeholder="e.g. Architectural Design"
+                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
+                        placeholder="e.g. CORE DESIGN UNIT"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Core Topic</Label>
+                      <Label className="text-[10px] uppercase font-black tracking-widest opacity-40">Operational Topic</Label>
                       <Input 
                         value={newRoomTopic} 
                         onChange={(e) => setNewRoomTopic(e.target.value)} 
-                        className="bg-black border-2 border-white/10" 
-                        placeholder="e.g. Physics Revision"
+                        className="bg-black border-2 border-white/10 rounded-none h-12 focus-visible:border-white/40" 
+                        placeholder="e.g. MATHEMATICAL PHYSICS"
                       />
                     </div>
                   </div>
@@ -174,9 +175,9 @@ export default function Home() {
                     <Button 
                       onClick={handleCreateRoom} 
                       disabled={isCreating || !newRoomName || !newRoomTopic}
-                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-black uppercase tracking-widest"
+                      className="w-full bg-white text-black hover:bg-white/90 font-black uppercase tracking-widest h-14 rounded-none"
                     >
-                      {isCreating ? "Initializing..." : "Activate"}
+                      {isCreating ? "Booting..." : "Activate"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -187,23 +188,23 @@ export default function Home() {
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest"
+                    className="w-full justify-between group border-2 border-white/10 bg-black text-white hover:bg-white hover:text-black transition-all rounded-none font-black uppercase tracking-widest h-16"
                   >
-                    Join Room
+                    Sync Interface
                     <LogIn className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black border-2 border-white/20">
+                <DialogContent className="bg-black border-2 border-white/10 rounded-none max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="font-black uppercase tracking-tighter">Enter Code</DialogTitle>
-                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-60">Join an existing study group.</DialogDescription>
+                    <DialogTitle className="font-black uppercase tracking-tighter text-2xl">Access Protocol</DialogTitle>
+                    <DialogDescription className="text-[10px] uppercase tracking-widest opacity-40">Enter the 6-digit sync code.</DialogDescription>
                   </DialogHeader>
-                  <div className="py-8">
+                  <div className="py-12">
                     <Input 
                       value={joinCode} 
                       onChange={(e) => setJoinCode(e.target.value)} 
-                      placeholder="6-DIGIT CODE" 
-                      className="bg-black border-2 border-white/10 text-center text-3xl h-20 font-black tracking-[0.5em]" 
+                      placeholder="000000" 
+                      className="bg-black border-2 border-white/10 text-center text-4xl h-24 font-black tracking-[0.5em] rounded-none focus-visible:border-white/40" 
                       maxLength={6}
                     />
                   </div>
@@ -211,9 +212,9 @@ export default function Home() {
                     <Button 
                       onClick={handleJoinRoom} 
                       disabled={isJoining || joinCode.length < 6}
-                      className="w-full bg-black text-white border-2 border-white/20 hover:bg-white hover:text-black font-black uppercase tracking-widest"
+                      className="w-full bg-white text-black hover:bg-white/90 font-black uppercase tracking-widest h-14 rounded-none"
                     >
-                      {isJoining ? "Connecting..." : "Connect"}
+                      {isJoining ? "Connecting..." : "Initialize Sync"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -226,22 +227,22 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-6">
-          <div className="flex items-center justify-between border-b-2 pb-4 border-white/10">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60">Temporal Productivity</h2>
-            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:underline">Full Analytics</Link>
+        <section className="space-y-8">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] opacity-30">Temporal Performance Data</h2>
+            <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest hover:text-white/60 transition-colors">Full Report</Link>
           </div>
           <AnalyticsCharts sessions={sessions || []} />
         </section>
       </main>
 
-      <footer className="border-t border-white/10 py-12 bg-black">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2 font-black tracking-tighter text-xl">
-            <BookOpen className="w-6 h-6" />
+      <footer className="border-t border-white/5 py-16 bg-black">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-3 font-black tracking-tighter text-2xl">
+            <BookOpen className="w-8 h-8" />
             <span>CONNECTSTUDY</span>
           </div>
-          <p className="text-[10px] uppercase font-bold tracking-[0.3em] opacity-40">
+          <p className="text-[10px] uppercase font-black tracking-[0.4em] opacity-20">
             © 2024 CONNECTSTUDY. DEEP WORK ONLY.
           </p>
         </div>
